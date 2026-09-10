@@ -480,10 +480,12 @@ a decision with no home is one you will make again in three months.
 9. **The unit of work.** What an issue contains, and the criteria ID scheme.
    *→ an issue template.*
 10. **Who looks at what landed, and how often.** Once merges are automatic,
-    nobody sees the default branch unless something makes them. This is the
-    cadence of the post-merge digest described in phase 3 — weekly, per
-    slice, or whatever fits. *→ whatever produces it on a schedule. If the
-    answer is "we will remember", it has no home and will not happen.*
+    nobody sees the default branch unless something makes them. Answer this
+    even if the answer is "nobody" — the point is to decide it rather than
+    discover it later. Under manual merge the answer is usually settled by
+    decision 8: whoever presses Merge is the one who looks. *→ if the answer
+    is a person doing something on a schedule, it needs a mechanism; "we will
+    remember" is not one. If the answer is nobody, record that as a decision.*
 
 Do not try to decide everything here. Capability that depends on evidence you
 do not have yet — extra specialist reviewers, deployment gates — belongs in a
@@ -522,7 +524,7 @@ the honest choices are *off* or *narrowed*.
 prudent. An approval from someone who did not read is not review; it is
 latency wearing review's clothes, and it leaves everyone believing changes
 are being seen when they are not. If the honest answer is that nobody will
-read them, turn it off and let the post-merge digest do the work instead.
+read them, turn it off rather than keeping a gate nobody exercises.
 
 A lighter option exists for one-off cases, without touching any setting: open
 that PR as a **draft**. Drafts are not merged automatically and their
@@ -635,29 +637,3 @@ branch that was never meant for them. Neither produces an error.
 
 Use `git worktree add` per agent. This costs one command and removes an
 entire class of confusing failure.
-
-### The post-merge digest
-
-Once merges are automatic, nobody looks at the default branch. This is the
-thing that makes someone look: a short list, produced on a schedule — weekly,
-or once a slice — that a person actually reads. An agent can assemble it; a
-human has to read it, or it is pointless.
-
-Three things go in it.
-
-**What merged.** The commits on the default branch since the last one, one
-line each. So that somebody knows what changed without reading diffs.
-
-**Findings that were waved through.** A `should_fix` does not block, so a PR
-merges with it outstanding and nothing ever raises it again. Left alone these
-accumulate into a pile of things the reviewers thought were wrong and nobody
-ever decided about. List them, and decide each one: fix it, or drop it
-deliberately.
-
-**Bugs that got past review.** When you find a defect, record which PR
-introduced it and whether any reviewer flagged it. If the reviewers approved
-the PR that caused it, they missed it.
-
-That last one is the only evidence you will ever get about whether the review
-layer works. Without it, adding a reviewer, rewriting a prompt, or deciding
-to trust the gate more are all guesses.
