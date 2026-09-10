@@ -153,23 +153,30 @@ jobs:
             echo "OK: $f is source-template guarded"
           done
 
-      - name: Verify agent-native Phase 0 and reconciliation contracts
+      - name: Verify intake and reconciliation contracts
         run: |
           echo "--- Checking first-agent and upgrade invariants ---"
-          test -f docs/PHASE-0.md || { echo "::error::docs/PHASE-0.md missing"; exit 1; }
-          grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/PHASE-0.md || { echo "::error::Phase 0 classification contract missing"; exit 1; }
-          grep -q 'Template Ancestry' docs/PHASE-0.md || { echo "::error::Phase 0 does not preserve future template-upgrade routing"; exit 1; }
-          grep -q 'baseline-aware' docs/PHASE-0.md || { echo "::error::Phase 0 does not recognize baseline compatibility signaling"; exit 1; }
-          if grep -q -- '- template drift detection;' docs/PHASE-0.md; then
-            echo "::error::Phase 0 still treats all template compatibility signaling as removable drift tooling"
+          test -f docs/INTAKE.md || { echo "::error::docs/INTAKE.md missing"; exit 1; }
+          test -f docs/workflow.md || { echo "::error::docs/workflow.md missing"; exit 1; }
+          grep -q 'Optional contents' docs/INTAKE.md || { echo "::error::intake must enumerate what is optional rather than have agents classify"; exit 1; }
+          grep -q 'Never optional' docs/INTAKE.md || { echo "::error::intake missing the non-negotiable security floor"; exit 1; }
+          grep -q 'baseline-aware' docs/INTAKE.md || { echo "::error::intake does not recognize baseline compatibility signaling"; exit 1; }
+          if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md; then
+            echo "::error::intake reintroduces the subtractive classification frame superseded by ADR 008"
             exit 1
           fi
+          # Slot form is the intake's detection signal: without markers a derived
+          # repository cannot tell whether it has been configured.
+          grep -q '«slot:' CLAUDE.md || { echo "::error::CLAUDE.md has no slot markers"; exit 1; }
           grep -q 'Derived-repository mode' CLAUDE.md || { echo "::error::CLAUDE.md missing derived-repository detection"; exit 1; }
           grep -q 'Derived-repository mode' AGENTS.md || { echo "::error::AGENTS.md missing derived-repository detection"; exit 1; }
+          # ADR 008: the two agent surfaces are byte-identical, so behavioural
+          # drift between Claude Code and Codex is impossible by construction.
+          cmp -s CLAUDE.md AGENTS.md || { echo "::error::CLAUDE.md and AGENTS.md have diverged; they must be byte-identical"; exit 1; }
           grep -q 'The Golden Path' README.md || { echo "::error::README missing agent-first golden path"; exit 1; }
 
           test -f .repo-template.yaml || { echo "::error::.repo-template.yaml missing"; exit 1; }
-          grep -q '^baseline_id: agent-native-phase0-v1$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
+          grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
           grep -q 'strategy: semantic-reconciliation' .repo-template.yaml || { echo "::error::semantic reconciliation policy missing"; exit 1; }
           test -f docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade guidance missing"; exit 1; }
           grep -q '## Repository Router' docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing repository router"; exit 1; }
@@ -182,8 +189,8 @@ jobs:
           grep -q 'semantic three-way reconciliation' .claude/skills/template-upgrade/SKILL.md || { echo "::error::template-upgrade skill discovery description incomplete"; exit 1; }
           grep -q 'Existing derived project' CLAUDE.md || { echo "::error::CLAUDE.md missing mature-project upgrade distinction"; exit 1; }
           grep -q 'Existing derived project' AGENTS.md || { echo "::error::AGENTS.md missing mature-project upgrade distinction"; exit 1; }
-          grep -q 'Template Ancestry' CLAUDE.md || { echo "::error::CLAUDE.md does not preserve future upgrade routing after Phase 0"; exit 1; }
-          grep -q 'Template Ancestry' AGENTS.md || { echo "::error::AGENTS.md does not preserve future upgrade routing after Phase 0"; exit 1; }
+          grep -q 'Template Ancestry' CLAUDE.md || { echo "::error::CLAUDE.md does not preserve future upgrade routing after the intake"; exit 1; }
+          grep -q 'Template Ancestry' AGENTS.md || { echo "::error::AGENTS.md does not preserve future upgrade routing after the intake"; exit 1; }
 
           if grep -qE 'Client.*API Server|npm run dev|DATABASE_URL|NODE_ENV|Production.*main branch' CLAUDE.md AGENTS.md .env.example; then
             echo "::error::Speculative application defaults returned to root agent/config surfaces"
@@ -193,7 +200,7 @@ jobs:
             echo "::error::Legacy interactive initializer behavior returned"
             exit 1
           fi
-          grep -q 'Phase 0 must validate and adapt CODEOWNERS' docs/AI-SECURITY.md || {
+          grep -q 'the intake must validate and adapt CODEOWNERS' docs/AI-SECURITY.md || {
             echo "::error::AI security docs do not reflect derived-repository CODEOWNERS validation"
             exit 1
           }
@@ -217,4 +224,4 @@ jobs:
             echo "::error::compatibility workflow returned to exact downstream file-hash matching"
             exit 1
           fi
-          echo "Agent-native Phase 0 and template reconciliation contracts are intact."
+          echo "Agent-native the intake and template reconciliation contracts are intact."

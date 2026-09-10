@@ -2,7 +2,7 @@
 
 > Establish a canonical first-agent normalization step so repositories created from `AI-repo-template` stop behaving like copies of the template before project-specific work begins.
 
-**Status:** Accepted  
+**Status:** Superseded by [ADR 008](008-slot-based-intake.md)  
 **Date:** 2026-08-13
 
 ## Context

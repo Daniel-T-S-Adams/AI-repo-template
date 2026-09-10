@@ -83,7 +83,7 @@ These files control AI agent behavior and are protected by CODEOWNERS:
 
 ### For Maintainers
 
-1. **Verify CODEOWNERS is yours** -- The source template intentionally names `@Daniel-T-S-Adams`; in a derived repository, Phase 0 must validate and adapt CODEOWNERS before relying on its review behavior. Confirm with `grep -E '^[^#]' .github/CODEOWNERS` that active rules name the correct owner for that repository.
+1. **Verify CODEOWNERS is yours** -- The source template intentionally names `@Daniel-T-S-Adams`; in a derived repository, the intake must validate and adapt CODEOWNERS before relying on its review behavior. Confirm with `grep -E '^[^#]' .github/CODEOWNERS` that active rules name the correct owner for that repository.
 
 2. **Enable branch protection** -- See [BRANCH-PROTECTION.md](BRANCH-PROTECTION.md) for the recommended settings and a `gh api` script.
 

@@ -1,5 +1,5 @@
 # PR Size Labeler
-# Source-template policy by default; derived projects opt in during Phase 0.
+# Source-template policy by default; derived projects opt in during the intake.
 
 name: PR Size
 

@@ -5,7 +5,7 @@ description: "Reconcile an existing repository descended from Daniel-T-S-Adams/A
 
 # Template Upgrade
 
-Use this skill for downstream template maintenance after repository creation. It is not the normal first-agent bootstrap path for a fresh current template instance; that path is Phase 0.
+Use this skill for downstream template maintenance after repository creation. It is not the normal first-agent bootstrap path for a fresh current template instance; that path is the intake.
 
 ## Source of Truth
 
@@ -43,7 +43,7 @@ Do not activate merely because a mature project differs from current `AI-repo-te
 
 Absence of `.repo-template.yaml` does not mean the repository is unrelated to the template. Use multiple independent ancestry signals and label confidence CONFIRMED, LIKELY, or UNKNOWN.
 
-For a confirmed pristine legacy instance, refreshing the inherited substrate and then using Phase 0 is appropriate.
+For a confirmed pristine legacy instance, refreshing the inherited substrate and then using the intake is appropriate.
 
 For an established legacy project, never reset it to the current template. Reconcile selectively and add provenance only after the upgrade succeeds.
 

@@ -2,7 +2,7 @@
 # Historical path retained for compatibility: check-template-drift.yml.
 #
 # Downstream repositories are expected to diverge from AI-repo-template after
-# Phase 0. This workflow therefore compares template provenance baselines,
+# the intake. This workflow therefore compares template provenance baselines,
 # not project file hashes.
 
 name: Check Template Compatibility

@@ -1,5 +1,5 @@
 # Auto-Label PRs
-# Source-template policy by default; derived projects opt in during Phase 0.
+# Source-template policy by default; derived projects opt in during the intake.
 
 name: Auto Label
 

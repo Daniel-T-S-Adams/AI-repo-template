@@ -1,5 +1,5 @@
 # Lock Stale Threads
-# Source-template maintenance by default; derived projects opt in during Phase 0.
+# Source-template maintenance by default; derived projects opt in during the intake.
 
 name: Lock Threads
 

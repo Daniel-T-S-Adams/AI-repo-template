@@ -3,7 +3,7 @@
 #
 # Source-template maintenance only by default. GitHub template creation copies
 # workflow files; derived repositories should not receive labels or scheduled
-# maintenance side effects before Phase 0 decides whether this capability belongs.
+# maintenance side effects before the intake decides whether this capability belongs.
 
 name: Detect Merge Conflicts
 
