@@ -149,7 +149,6 @@ FEATURES = [
     ("prod-checklist", "Production checklist", "docs", 3, "docs/PROD_CHECKLIST.md"),
     ("meta-ci", "Template self-validation", "ci-cd", 2, ".github/workflows/validate-template.yml"),
     ("detect-conflicts", "Merge conflict detection", "ci-cd", 2, ".github/workflows/detect-conflicts.yml"),
-    ("update-contributors", "Contributor tracking", "community", 2, ".github/workflows/update-contributors.yml"),
     ("contributors-md", "CONTRIBUTORS.md", "community", 2, "CONTRIBUTORS.md"),
     ("sbom-release", "SBOM in releases", "security", 3, "__sbom_check__"),
     ("skills-dir", "Claude skills directory", "ai-config", 2, ".claude/skills/README.md"),

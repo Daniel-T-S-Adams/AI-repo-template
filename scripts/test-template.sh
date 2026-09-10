@@ -108,7 +108,7 @@ run_layer_1() {
   # 1.2 Workflow count
   local wf_count
   wf_count=$(find .github/workflows -name '*.yml' -type f | wc -l | tr -d ' ')
-  assert_count "GitHub Actions workflows" 19 "$wf_count"
+  assert_count "GitHub Actions workflows" 18 "$wf_count"
 
   # 1.3 Issue template count (excluding config.yml)
   local tmpl_count

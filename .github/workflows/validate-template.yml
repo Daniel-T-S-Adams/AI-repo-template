@@ -144,7 +144,6 @@ jobs:
           echo "--- Checking source-only workflow guards ---"
           for f in \
             .github/workflows/validate-template.yml \
-            .github/workflows/update-contributors.yml \
             .github/workflows/scorecard.yml \
             .github/workflows/detect-conflicts.yml; do
             if ! grep -Fq "if: github.repository == 'Daniel-T-S-Adams/AI-repo-template'" "$f"; then
