@@ -3,4 +3,4 @@ source_repository: Daniel-T-S-Adams/AI-repo-template
 baseline_id: agent-native-phase0-v1
 upgrade:
   strategy: semantic-reconciliation
-  canonical_spec: https://github.com/Daniel-T-S-Adams/AI-repo-template/blob/main/docs/TEMPLATE-UPGRADE.md
+  canonical_spec: https://github.com/Daniel-T-S-Adams/AI-repo-template/blob/main/docs/template/TEMPLATE-UPGRADE.md

@@ -39,7 +39,7 @@ graph TD
 | GitHub governance | PR/issue policy, CODEOWNERS, dependency and workflow configuration | `.github/` |
 | Security baseline | Secret protection, repository hardening, AI threat model | `templates/hooks/`, `scripts/secure-repo.sh`, `docs/AI-SECURITY.md` |
 | Verification | Template regression, E2E, compliance, and CI checks | `scripts/test-template.sh`, `scripts/test-e2e.sh`, `scripts/audit-compliance.sh`, `.github/workflows/` |
-| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/decisions/` |
+| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/adr/` |
 
 ## Derived-Repository Flow
 
@@ -71,18 +71,18 @@ sequenceDiagram
 
 ## Decision Records
 
-Material architecture decisions are recorded in [docs/decisions/](decisions/).
+Material architecture decisions are recorded in [docs/adr/](adr/).
 
 | ADR | Decision |
 |---|---|
-| [001](decisions/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
-| [002](decisions/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
-| [003](decisions/003-skills-directory-format.md) | Use runtime-supported skill directory format |
-| [004](decisions/004-two-agent-focus.md) | Focus on Claude Code + Codex |
-| [005](decisions/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
-| [006](decisions/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories |
+| [001](adr/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
+| [002](adr/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
+| [003](adr/003-skills-directory-format.md) | Use runtime-supported skill directory format |
+| [004](adr/004-two-agent-focus.md) | Focus on Claude Code + Codex |
+| [005](adr/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
+| [006](adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories |
 
 ---
 
 **Referenced by:** [README.md](../README.md), [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md)  
-**See also:** [Phase 0](PHASE-0.md) | [AI Security](AI-SECURITY.md) | [ADRs](decisions/)
+**See also:** [Phase 0](PHASE-0.md) | [AI Security](AI-SECURITY.md) | [ADRs](adr/)

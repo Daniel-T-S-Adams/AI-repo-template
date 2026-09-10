@@ -166,7 +166,7 @@ When the current session already contains the project, proceed directly from nor
 2. Organize them into a coherent repository structure appropriate to the project rather than the template.
 3. Preserve distinctions among requirements, architecture, decisions, research, schemas, implementation, operations, and supporting material.
 4. Replace the transitional README with the real project README.
-5. Replace `CLAUDE.md` and `AGENTS.md` with concise project-specific operating instructions. If `.repo-template.yaml` remains, include a small **Template Ancestry** rule that says normal project work does not rerun Phase 0 and future template-upgrade/compatibility requests use the canonical `docs/TEMPLATE-UPGRADE.md` referenced by the marker.
+5. Replace `CLAUDE.md` and `AGENTS.md` with concise project-specific operating instructions. If `.repo-template.yaml` remains, include a small **Template Ancestry** rule that says normal project work does not rerun Phase 0 and future template-upgrade/compatibility requests use the canonical `docs/template/TEMPLATE-UPGRADE.md` referenced by the marker.
 6. Configure CI, dependency tooling, environment documentation, and other capabilities only where the project provides evidence for them.
 7. Capture material architectural decisions as ADRs when they are real decisions, not placeholders.
 8. Reconcile links, indexes, and source-of-truth relationships.
@@ -197,7 +197,7 @@ Create `docs/PROJECT_INTAKE.md` only when it is useful as a landing-zone schema.
 - security/privacy constraints;
 - source-of-truth documents and Definition of Done.
 
-Create `docs/decisions/README.md` only if an ADR landing zone is useful. Do not fabricate ADRs.
+Create `docs/adr/README.md` only if an ADR landing zone is useful. Do not fabricate ADRs.
 
 ## Phase 6 — GitHub and Automation
 
@@ -345,4 +345,4 @@ Phase 0 is complete only when:
 ---
 
 **Referenced by:** `README.md`, `CLAUDE.md`, `AGENTS.md`, `.claude/commands/bootstrap.md`  
-**See also:** [Template Upgrade](TEMPLATE-UPGRADE.md) | [AI Security](AI-SECURITY.md) | [Documentation Guide](DOCUMENTATION-GUIDE.md) | [ADRs](decisions/)
+**See also:** [Template Upgrade](template/TEMPLATE-UPGRADE.md) | [AI Security](AI-SECURITY.md) | [Documentation Guide](DOCUMENTATION-GUIDE.md) | [ADRs](adr/)

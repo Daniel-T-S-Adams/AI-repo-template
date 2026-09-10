@@ -100,7 +100,7 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
 
   essential_ok=true
   for f in README.md CLAUDE.md AGENTS.md .repo-template.yaml \
-           docs/PHASE-0.md docs/TEMPLATE-UPGRADE.md \
+           docs/PHASE-0.md docs/template/TEMPLATE-UPGRADE.md \
            .claude/commands/bootstrap.md .claude/commands/upgrade-template.md \
            .gitattributes .gitignore scripts/secure-repo.sh \
            templates/hooks/setup-hooks.sh templates/hooks/pre-commit-secrets.sh.template; do
@@ -134,8 +134,8 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Template provenance marker is missing or incorrect"
   fi
 
-  if grep -q 'three-way model' docs/TEMPLATE-UPGRADE.md && \
-     grep -q 'docs/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
+  if grep -q 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
+     grep -q 'docs/template/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
     pass "Template upgrade guidance and Claude entrypoint transfer"
   else
     fail "Template upgrade reconciliation contract is incomplete"

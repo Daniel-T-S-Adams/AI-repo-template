@@ -167,7 +167,7 @@ flowchart LR
 
 - [ ] **Deployment process documented.** Write down exactly how to deploy. Include: which branch triggers deployment, what environment variables need to be set in production, and how to roll back if something goes wrong. Future you will thank present you.
 
-- [ ] **Architecture decisions recorded.** When you make a significant technical choice (database, framework, authentication method), write a short decision record explaining what you chose and why. See [docs/decisions/](decisions/) for the ADR template.
+- [ ] **Architecture decisions recorded.** When you make a significant technical choice (database, framework, authentication method), write a short decision record explaining what you chose and why. See [docs/adr/](adr/) for the ADR template.
 
 > [!TIP]
 > **Quick win:** Copy your terminal history from the last time you set up the project and turn it into README setup instructions. Real commands you actually ran are more useful than idealized instructions.

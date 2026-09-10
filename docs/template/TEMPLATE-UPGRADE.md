@@ -171,7 +171,7 @@ Produce a reconciliation assessment first. Avoid broad changes until project own
 
 If `.repo-template.yaml` remains in the project, project-specific `CLAUDE.md` and `AGENTS.md` should retain a concise **Template Ancestry** rule equivalent to:
 
-> This project descends from `Daniel-T-S-Adams/AI-repo-template`. `.repo-template.yaml` records the last reconciled compatibility baseline. Do not rerun Phase 0 for normal project work. When a template upgrade or compatibility review is requested, follow the canonical `docs/TEMPLATE-UPGRADE.md` referenced by the marker and reconcile semantically rather than synchronizing files.
+> This project descends from `Daniel-T-S-Adams/AI-repo-template`. `.repo-template.yaml` records the last reconciled compatibility baseline. Do not rerun Phase 0 for normal project work. When a template upgrade or compatibility review is requested, follow the canonical `docs/template/TEMPLATE-UPGRADE.md` referenced by the marker and reconcile semantically rather than synchronizing files.
 
 This routing rule is intentionally small. It allows future agents to choose the correct path without carrying the source template's generic project instructions.
 
@@ -286,4 +286,4 @@ Older marked baselines and legacy unmarked repositories must remain supported by
 ---
 
 **Referenced by:** `.repo-template.yaml`, `CLAUDE.md`, `AGENTS.md`, `.claude/commands/upgrade-template.md`, `.claude/skills/template-upgrade/SKILL.md`  
-**See also:** [Phase 0](PHASE-0.md) | [ADR 007](decisions/007-template-upgrade-reconciliation.md) | [AI Security](AI-SECURITY.md)
+**See also:** [Phase 0](../PHASE-0.md) | [ADR 007](../adr/007-template-upgrade-reconciliation.md) | [AI Security](../AI-SECURITY.md)

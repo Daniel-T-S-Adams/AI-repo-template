@@ -9,7 +9,7 @@ Use this skill for downstream template maintenance after repository creation. It
 
 ## Source of Truth
 
-Read `docs/TEMPLATE-UPGRADE.md` before performing an upgrade. If the local copy is absent or clearly older than the marker's canonical reference, retrieve the canonical specification referenced by `.repo-template.yaml`.
+Read `docs/template/TEMPLATE-UPGRADE.md` before performing an upgrade. If the local copy is absent or clearly older than the marker's canonical reference, retrieve the canonical specification referenced by `.repo-template.yaml`.
 
 The SOP is model-neutral and authoritative. This skill is a Claude execution helper, not a replacement for the SOP.
 

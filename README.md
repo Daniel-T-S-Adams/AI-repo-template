@@ -86,7 +86,7 @@ The source template includes a broad security and governance toolkit so Phase 0 
 - pre-commit secret scanning and GitHub hardening scripts;
 - issue/PR governance and CODEOWNERS;
 - security documentation and prompt-injection defenses;
-- **19 workflows** in the source template, including security, release, maintenance, and validation capabilities;
+- **18 workflows** in the source template, including security, release, maintenance, and validation capabilities;
 - Claude commands, skills, hooks, and an example agent;
 - compliance and self-test tooling.
 
@@ -120,7 +120,7 @@ bash scripts/secure-repo.sh --audit
 | [Branch Protection](docs/BRANCH-PROTECTION.md) | Repository hardening and rulesets |
 | [Documentation Guide](docs/DOCUMENTATION-GUIDE.md) | Documentation quality standard |
 | [Architecture](docs/ARCHITECTURE.md) | Architecture of the template project itself |
-| [ADRs](docs/decisions/) | Material design decisions |
+| [ADRs](docs/adr/) | Material design decisions |
 
 The full index is in [docs/README.md](docs/README.md).
 
