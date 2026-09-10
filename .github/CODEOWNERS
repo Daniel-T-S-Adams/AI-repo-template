@@ -1,0 +1,26 @@
+# CODEOWNERS — security-sensitive review ownership
+#
+# Source-template mode: @Daniel-T-S-Adams is the correct owner for this repository.
+# Derived-repository mode: Phase 0 must validate these owners for the new
+# repository before relying on CODEOWNERS review behavior.
+#
+# To make CODEOWNER review blocking, enable the corresponding branch/ruleset
+# requirement. See docs/BRANCH-PROTECTION.md.
+
+# Security-sensitive files
+.github/workflows/                   @Daniel-T-S-Adams
+SECURITY.md                          @Daniel-T-S-Adams
+
+# Agent instruction surfaces
+CLAUDE.md                            @Daniel-T-S-Adams
+AGENTS.md                            @Daniel-T-S-Adams
+.claude/skills/                      @Daniel-T-S-Adams
+.claude/agents/                      @Daniel-T-S-Adams
+.claude/hooks/                       @Daniel-T-S-Adams
+.claude/commands/                    @Daniel-T-S-Adams
+
+# Security hardening surfaces
+scripts/secure-repo.sh               @Daniel-T-S-Adams
+templates/hooks/                     @Daniel-T-S-Adams
+.github/workflows/secret-scan-pr.yml @Daniel-T-S-Adams
+.gitattributes                       @Daniel-T-S-Adams

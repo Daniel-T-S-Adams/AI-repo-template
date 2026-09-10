@@ -1,0 +1,36 @@
+# Lock Stale Threads
+# Source-template maintenance by default; derived projects opt in during Phase 0.
+
+name: Lock Threads
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  lock:
+    if: github.repository == 'Daniel-T-S-Adams/AI-repo-template'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Lock closed threads
+        uses: dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c # v6.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-inactive-days: 30
+          pr-inactive-days: 30
+          issue-comment: >
+            This issue has been locked because it has been closed for more than
+            30 days. If you have a related question or issue, please open a new
+            one with a link to this thread for context.
+          pr-comment: >
+            This PR has been locked because it has been closed for more than
+            30 days. If you have a related question or change, please open a new
+            PR with a link to this thread for context.
+          log-output: true

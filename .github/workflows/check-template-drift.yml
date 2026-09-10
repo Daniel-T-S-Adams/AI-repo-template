@@ -1,0 +1,89 @@
+# Template Compatibility — Reusable Workflow
+# Historical path retained for compatibility: check-template-drift.yml.
+#
+# Downstream repositories are expected to diverge from AI-repo-template after
+# Phase 0. This workflow therefore compares template provenance baselines,
+# not project file hashes.
+
+name: Check Template Compatibility
+
+on:
+  workflow_call:
+    inputs:
+      template_repo:
+        description: 'Template repository that defines the current baseline'
+        default: 'Daniel-T-S-Adams/AI-repo-template'
+        type: string
+      severity:
+        description: 'How to treat an outdated or legacy baseline (info, warn, error)'
+        default: 'warn'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout downstream repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare template baselines
+        env:
+          TEMPLATE_REPO: ${{ inputs.template_repo }}
+          GH_TOKEN: ${{ github.token }}
+          SEVERITY: ${{ inputs.severity }}
+        run: |
+          set -u
+          echo "=== Template Compatibility Check ==="
+          echo "Template: $TEMPLATE_REPO"
+          echo "Downstream: $GITHUB_REPOSITORY"
+
+          template_marker=$(gh api \
+            -H 'Accept: application/vnd.github.raw+json' \
+            "repos/$TEMPLATE_REPO/contents/.repo-template.yaml" 2>/dev/null || true)
+
+          if [ -z "$template_marker" ]; then
+            echo "::error::Current template provenance marker could not be read; compatibility is unverified."
+            exit 1
+          fi
+
+          current_baseline=$(printf '%s\n' "$template_marker" | awk -F': *' '$1 == "baseline_id" {print $2; exit}')
+          if [ -z "$current_baseline" ]; then
+            echo "::error::Current template marker has no baseline_id; compatibility is unverified."
+            exit 1
+          fi
+
+          if [ ! -f .repo-template.yaml ]; then
+            message="Legacy pre-marker repository. Reconcile with the current AI-repo-template baseline: $current_baseline"
+            case "$SEVERITY" in
+              error) echo "::error::$message"; exit 1 ;;
+              warn)  echo "::warning::$message" ;;
+              *)     echo "::notice::$message" ;;
+            esac
+            exit 0
+          fi
+
+          local_baseline=$(awk -F': *' '$1 == "baseline_id" {print $2; exit}' .repo-template.yaml)
+          if [ -z "$local_baseline" ]; then
+            echo "::error::.repo-template.yaml has no baseline_id; compatibility is unverified."
+            exit 1
+          fi
+
+          echo "Project baseline:  $local_baseline"
+          echo "Current baseline:  $current_baseline"
+
+          if [ "$local_baseline" = "$current_baseline" ]; then
+            echo "Template baseline is current. Project-specific file divergence is expected and is not treated as drift."
+            exit 0
+          fi
+
+          message="Template baseline is outdated ($local_baseline -> $current_baseline). Use semantic reconciliation; do not synchronize project files blindly."
+          case "$SEVERITY" in
+            error) echo "::error::$message"; exit 1 ;;
+            warn)  echo "::warning::$message" ;;
+            *)     echo "::notice::$message" ;;
+          esac

@@ -1,0 +1,221 @@
+# Template Validation (Meta-CI)
+# Validates the template source itself. GitHub template creation copies workflow
+# files, so this job is explicitly inert in derived repositories.
+
+name: Validate Template
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.repository == 'Daniel-T-S-Adams/AI-repo-template'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate YAML files
+        run: |
+          echo "--- Validating YAML files ---"
+          if ! python3 -c "import yaml" 2>/dev/null; then
+            echo "::error::pyyaml not available — YAML validation cannot run (this is a hard failure, not a pass)"
+            exit 1
+          fi
+          ERRORS=0
+          for f in $(find . -name '*.yml' -o -name '*.yaml' | grep -v node_modules | sort); do
+            if python3 -c "import sys, yaml; yaml.safe_load(open(sys.argv[1]))" "$f" 2>/dev/null; then
+              echo "OK: $f"
+            else
+              echo "FAIL: $f"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS YAML file(s) failed validation"
+            exit 1
+          fi
+
+      - name: Validate JSON files
+        run: |
+          echo "--- Validating JSON files ---"
+          FILES=$(find . -name '*.json' | grep -v node_modules | sort | tr '\n' ' ')
+          # shellcheck disable=SC2086
+          python3 scripts/validate-jsonc.py $FILES || {
+            echo "::error::One or more JSON file(s) failed validation"
+            exit 1
+          }
+
+      - name: ShellCheck scripts
+        run: |
+          echo "--- Running ShellCheck ---"
+          if ! command -v shellcheck &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -qq -y shellcheck
+          fi
+          ERRORS=0
+          for f in $(find . -name '*.sh' | grep -v node_modules | sort); do
+            if shellcheck "$f"; then
+              echo "OK: $f"
+            else
+              echo "FAIL: $f"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS script(s) failed ShellCheck"
+            exit 1
+          fi
+
+      - name: Verify all actions are SHA-pinned
+        run: |
+          echo "--- Checking SHA-pinned actions ---"
+          UNPINNED=0
+          while IFS= read -r line; do
+            case "$(echo "$line" | sed 's/^[[:space:]]*//')" in \#*) continue ;; esac
+            REF=$(echo "$line" | sed -E 's/.*uses:[[:space:]]*//; s/[[:space:]]*#.*$//; s/["'"'"']//g')
+            case "$REF" in ./*|docker://*) continue ;; esac
+            if ! echo "$REF" | grep -qE '@[0-9a-f]{40}$'; then
+              echo "::error::Not SHA-pinned: $REF"
+              UNPINNED=$((UNPINNED + 1))
+            fi
+          done < <(grep -rhE '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]' .github/workflows/)
+          if [ "$UNPINNED" -gt 0 ]; then
+            exit 1
+          fi
+          echo "All actions are SHA-pinned (anchored check)."
+
+      - name: ShellCheck hook templates
+        run: |
+          echo "--- ShellCheck on .sh.template files ---"
+          ERRORS=0
+          for f in $(find . -name '*.sh.template' | grep -v node_modules | sort); do
+            if shellcheck "$f"; then
+              echo "OK: $f"
+            else
+              echo "FAIL: $f"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS template(s) failed ShellCheck"
+            exit 1
+          fi
+          echo "All hook templates pass ShellCheck."
+
+      - name: Verify security files exist
+        run: |
+          echo "--- Checking security files ---"
+          MISSING=0
+          for f in .gitattributes scripts/secure-repo.sh templates/hooks/pre-commit-secrets.sh.template templates/hooks/setup-hooks.sh docs/FORK-SECURITY.md; do
+            if [ -f "$f" ]; then
+              echo "OK: $f"
+            else
+              echo "MISSING: $f"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ "$MISSING" -gt 0 ]; then
+            echo "::error::$MISSING security file(s) missing"
+            exit 1
+          fi
+
+      - name: Check for secrets patterns
+        run: |
+          echo "--- Scanning for secrets patterns ---"
+          PATTERNS='(AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{48}|-----BEGIN (RSA |EC )?PRIVATE KEY)'
+          MATCHES=$(grep -rEn "$PATTERNS" --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.md' . || true)
+          if [ -n "$MATCHES" ]; then
+            echo "::error::Possible secrets detected:"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "No secrets patterns found."
+
+      - name: Verify source-template workflows self-quarantine
+        run: |
+          echo "--- Checking source-only workflow guards ---"
+          for f in \
+            .github/workflows/validate-template.yml \
+            .github/workflows/update-contributors.yml \
+            .github/workflows/scorecard.yml \
+            .github/workflows/detect-conflicts.yml; do
+            if ! grep -Fq "if: github.repository == 'Daniel-T-S-Adams/AI-repo-template'" "$f"; then
+              echo "::error::$f can execute source-template maintenance in derived repositories"
+              exit 1
+            fi
+            echo "OK: $f is source-template guarded"
+          done
+
+      - name: Verify agent-native Phase 0 and reconciliation contracts
+        run: |
+          echo "--- Checking first-agent and upgrade invariants ---"
+          test -f docs/PHASE-0.md || { echo "::error::docs/PHASE-0.md missing"; exit 1; }
+          grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/PHASE-0.md || { echo "::error::Phase 0 classification contract missing"; exit 1; }
+          grep -q 'Template Ancestry' docs/PHASE-0.md || { echo "::error::Phase 0 does not preserve future template-upgrade routing"; exit 1; }
+          grep -q 'baseline-aware' docs/PHASE-0.md || { echo "::error::Phase 0 does not recognize baseline compatibility signaling"; exit 1; }
+          if grep -q -- '- template drift detection;' docs/PHASE-0.md; then
+            echo "::error::Phase 0 still treats all template compatibility signaling as removable drift tooling"
+            exit 1
+          fi
+          grep -q 'Derived-repository mode' CLAUDE.md || { echo "::error::CLAUDE.md missing derived-repository detection"; exit 1; }
+          grep -q 'Derived-repository mode' AGENTS.md || { echo "::error::AGENTS.md missing derived-repository detection"; exit 1; }
+          grep -q 'The Golden Path' README.md || { echo "::error::README missing agent-first golden path"; exit 1; }
+
+          test -f .repo-template.yaml || { echo "::error::.repo-template.yaml missing"; exit 1; }
+          grep -q '^baseline_id: agent-native-phase0-v1$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
+          grep -q 'strategy: semantic-reconciliation' .repo-template.yaml || { echo "::error::semantic reconciliation policy missing"; exit 1; }
+          test -f docs/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade guidance missing"; exit 1; }
+          grep -q '## Repository Router' docs/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing repository router"; exit 1; }
+          grep -q 'A — Historical template baseline' docs/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing three-way baseline model"; exit 1; }
+          grep -q 'Legacy repositories without the marker' docs/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing legacy-unmarked support"; exit 1; }
+          grep -q '## Future Template Evolution' docs/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing future baseline rules"; exit 1; }
+          test -f .claude/commands/upgrade-template.md || { echo "::error::Claude template-upgrade entrypoint missing"; exit 1; }
+          test -f .claude/skills/template-upgrade/SKILL.md || { echo "::error::Claude template-upgrade skill missing"; exit 1; }
+          grep -q '^name: template-upgrade$' .claude/skills/template-upgrade/SKILL.md || { echo "::error::template-upgrade skill frontmatter invalid"; exit 1; }
+          grep -q 'semantic three-way reconciliation' .claude/skills/template-upgrade/SKILL.md || { echo "::error::template-upgrade skill discovery description incomplete"; exit 1; }
+          grep -q 'Existing derived project' CLAUDE.md || { echo "::error::CLAUDE.md missing mature-project upgrade distinction"; exit 1; }
+          grep -q 'Existing derived project' AGENTS.md || { echo "::error::AGENTS.md missing mature-project upgrade distinction"; exit 1; }
+          grep -q 'Template Ancestry' CLAUDE.md || { echo "::error::CLAUDE.md does not preserve future upgrade routing after Phase 0"; exit 1; }
+          grep -q 'Template Ancestry' AGENTS.md || { echo "::error::AGENTS.md does not preserve future upgrade routing after Phase 0"; exit 1; }
+
+          if grep -qE 'Client.*API Server|npm run dev|DATABASE_URL|NODE_ENV|Production.*main branch' CLAUDE.md AGENTS.md .env.example; then
+            echo "::error::Speculative application defaults returned to root agent/config surfaces"
+            exit 1
+          fi
+          if grep -qE 'Quick setup|Gather Project Information|Ask for project name' .claude/commands/init-template.md; then
+            echo "::error::Legacy interactive initializer behavior returned"
+            exit 1
+          fi
+          grep -q 'Phase 0 must validate and adapt CODEOWNERS' docs/AI-SECURITY.md || {
+            echo "::error::AI security docs do not reflect derived-repository CODEOWNERS validation"
+            exit 1
+          }
+          if grep -q '/project:init-template.*replaces the maintainer' docs/AI-SECURITY.md; then
+            echo "::error::AI security docs still claim the legacy initializer rewrites CODEOWNERS"
+            exit 1
+          fi
+          grep -q 'First-Agent Contract' scripts/test-e2e.sh || {
+            echo "::error::E2E suite does not exercise the first-agent contract"
+            exit 1
+          }
+          if grep -qE 'Retrofit Existing Repo|Three-Command Setup \(README Hero\)|Workflow E curl' scripts/test-e2e.sh; then
+            echo "::error::E2E suite still validates superseded onboarding journeys"
+            exit 1
+          fi
+          grep -q 'Template baseline is current' .github/workflows/check-template-drift.yml || {
+            echo "::error::compatibility workflow is not baseline-aware"
+            exit 1
+          }
+          if grep -q 'git hash-object' .github/workflows/check-template-drift.yml; then
+            echo "::error::compatibility workflow returned to exact downstream file-hash matching"
+            exit 1
+          fi
+          echo "Agent-native Phase 0 and template reconciliation contracts are intact."
