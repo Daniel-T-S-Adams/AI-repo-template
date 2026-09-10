@@ -1,0 +1,71 @@
+# Auto-merge — arms GitHub's native auto-merge so a green PR lands without a
+# human click.
+#
+# This job never merges past protection. It asks GitHub to merge the PR *when
+# branch protection is satisfied*; protection alone decides whether and when
+# that happens. No job in this repository holds the power to merge past a red
+# check.
+#
+# Arming: set the repository variable AUTO_MERGE_ENABLED=true. Leave it unset
+# for the manual-merge model, where a green PR simply waits for you to press
+# Merge — branch protection still blocks the merge until checks pass. See
+# docs/INTAKE.md slot 8 for the three options and why "require an approval" is
+# not workable in a solo repository.
+
+name: Auto-merge
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  # `pull-requests: write` is what arms auto-merge. `contents: write` covers
+  # the case where the PR is already green when this runs, which merges
+  # immediately rather than arming.
+  contents: write
+  pull-requests: write
+
+jobs:
+  arm:
+    name: Arm auto-merge
+    # Same-repo, non-draft, default-branch PRs only. A fork PR's token is
+    # read-only. A draft is not a merge candidate — which is what makes
+    # "open it as a draft" a usable one-off human approval. Default branch
+    # only, because protection is the entire safety argument here and it is
+    # the only branch that carries it: arming a PR against an unprotected
+    # stacked branch would merge it with no checks at all.
+    if: >
+      vars.AUTO_MERGE_ENABLED == 'true' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
+      github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Merging unattended without CI gating is unsafe, so refuse to arm
+      # rather than arming into a repository where nothing has to be green.
+      - name: Verify merge gating exists
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          AUTO=$(gh api "repos/$GITHUB_REPOSITORY" --jq '.allow_auto_merge' 2>/dev/null || echo "false")
+          CHECKS=$(gh api "repos/$GITHUB_REPOSITORY/rules/branches/${{ github.event.repository.default_branch }}" \
+            --jq '[.[] | select(.type=="required_status_checks")] | length' 2>/dev/null || echo 0)
+          if [ "$AUTO" != "true" ] || [ "$CHECKS" -eq 0 ]; then
+            echo "::error title=Auto-merge NOT armed::allow_auto_merge=$AUTO, required-status-check rules=$CHECKS. Both are required before unattended merges are safe. Run scripts/secure-repo.sh, or unset AUTO_MERGE_ENABLED to use the manual-merge model."
+            exit 1
+          fi
+          echo "armed=true" >> "$GITHUB_OUTPUT"
+
+      # Squash, matching one-commit-per-PR history. Re-arming on every push is
+      # deliberate and idempotent: auto-merge is cleared when a PR returns to
+      # draft or hits a conflict, and this restores it on the next push.
+      # Not masked with `|| true`: if arming fails, it fails loudly rather than
+      # leaving PRs silently unarmed.
+      - name: Enable auto-merge
+        if: steps.gate.outputs.armed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --auto --squash

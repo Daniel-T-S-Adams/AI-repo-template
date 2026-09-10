@@ -86,7 +86,7 @@ The source template includes a broad security and governance toolkit so the inta
 - pre-commit secret scanning and GitHub hardening scripts;
 - issue/PR governance and CODEOWNERS;
 - security documentation and prompt-injection defenses;
-- **18 workflows** in the source template, including security, release, maintenance, and validation capabilities;
+- **20 workflows** in the source template, including security, release, maintenance, and validation capabilities;
 - Claude commands, skills, hooks, and an example agent;
 - compliance and self-test tooling.
 

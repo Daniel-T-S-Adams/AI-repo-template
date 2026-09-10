@@ -88,8 +88,8 @@ again in three months.
 | 1 | Which document owns what | Context routing table in `CLAUDE.md` |
 | 2 | The domain's invariants | `.github/review/invariants.md`, and the domain `must_fix` slot in `CLAUDE.md` |
 | 3 | What blocks a merge | Severity definitions in `CLAUDE.md` (already written — extend, don't replace) |
-| 4 | The reviewers | `.github/workflows/ai-review.yml` matrix and its prompt files |
-| 5 | The check command | `Makefile` `check` target, named in `CLAUDE.md` |
+| 4 | The reviewers | The `REVIEWERS` slot in `.github/workflows/ai-review.yml`, and the prompt files in `.github/review/`. Arm with the repository variable `AI_REVIEW_ENABLED=true` and the secret `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`) or `ANTHROPIC_API_KEY` |
+| 5 | The check command | The `*_CMD` slots in `Makefile`. Unconfigured targets fail rather than no-op, so CI stays red until this slot is filled — that is the intended signal, not a bug |
 | 6 | Deterministic feedback | `fixtures/`, and a fake for each external service |
 | 7 | What only a human may do | Human-only actions in `CLAUDE.md` |
 | 8 | What must be green, and how a PR lands | **Branch protection on GitHub — not in the repository.** Record the intended state via `scripts/secure-repo.sh` and its config, so a silently removed required check is detectable |
@@ -104,12 +104,14 @@ an explicit trigger, not in this pass.
 
 Three settings, and the middle one is usually right for a solo project:
 
-- **Automatic.** Checks and reviewers decide; a green PR merges itself. Ship
-  `.github/workflows/auto-merge.yml`, set `required_approving_review_count` to
-  `0`.
-- **Manual merge.** A green PR waits for the human to press Merge. Do not ship
-  `auto-merge.yml`; keep approvals at `0`. Branch protection still blocks the
-  merge until checks pass.
+- **Automatic.** Checks and reviewers decide; a green PR merges itself. Set the
+  repository variable `AUTO_MERGE_ENABLED=true`, and
+  `required_approving_review_count` to `0`. `auto-merge.yml` refuses to arm
+  unless `allow_auto_merge` is on *and* a required-status-check rule exists, so
+  it cannot merge into a repository where nothing has to be green.
+- **Manual merge.** A green PR waits for the human to press Merge. Leave
+  `AUTO_MERGE_ENABLED` unset; keep approvals at `0`. Branch protection still
+  blocks the merge until checks pass. This is the default.
 - **Approval required.** Only workable with more than one person. A solo
   repository cannot approve its own PRs, so every merge becomes an
   administrative override — which trains you to bypass your own protections and
@@ -158,7 +160,18 @@ settings, and nothing in the repository will tell you they are missing.
 
 The intake is done when:
 
-- no `«slot:»` marker remains in `CLAUDE.md`;
+- no slot marker remains in any **configuration** surface:
+
+  ```
+  git grep -n '«slot:' -- CLAUDE.md AGENTS.md Makefile \
+      .github/review/ .github/workflows/ai-review.yml .github/workflows/ci.yml
+  ```
+
+  These are the files that carry real slots. `README.md`, this file and ADR 008
+  mention the marker in prose and always will, so a repo-wide grep is not the
+  check. `CLAUDE.md` is not the only surface that matters: an unfilled
+  invariants prompt leaves that reviewer checking nothing while still voting
+  `approve`;
 - `docs/spec/` has at least one owning file and the routing table lists it;
 - `docs/checklist.md` exists with the slice list and build order;
 - the first slice's plan exists with numbered criteria;
