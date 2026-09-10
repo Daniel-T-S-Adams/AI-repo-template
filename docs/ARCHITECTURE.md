@@ -83,6 +83,7 @@ Material architecture decisions are recorded in [docs/adr/](adr/).
 | [006](adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories — *superseded by 008* |
 | [007](adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
 | [008](adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
+| [009](adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
 
 ---
 

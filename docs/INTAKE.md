@@ -94,7 +94,7 @@ again in three months.
 | 7 | What only a human may do | Human-only actions in `CLAUDE.md` |
 | 8 | What must be green, and how a PR lands | **Branch protection on GitHub — not in the repository.** Record the intended state via `scripts/secure-repo.sh` and its config, so a silently removed required check is detectable |
 | 9 | The unit of work | Issue template, and the criteria ID scheme |
-| 10 | Who reads what landed, and how often | The post-merge digest schedule |
+| 10 | Who reads what landed, and how often | An ADR recording the answer. "Nobody" is valid — this template does not ship a mechanism for it (see ADR 009). Under manual merge, slot 8 usually answers it |
 
 Do not try to decide everything. Capability that depends on evidence you do not
 have yet — extra specialist reviewers, deployment gates — belongs in a plan with
