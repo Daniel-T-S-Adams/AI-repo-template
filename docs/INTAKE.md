@@ -150,11 +150,36 @@ Creating a repository from a template copies files. It does not copy repository
 settings, and nothing in the repository will tell you they are missing.
 
 - Install the local hooks: `bash templates/hooks/setup-hooks.sh`
-- Apply protection and settings: `bash scripts/secure-repo.sh`
-- Verify: `bash scripts/secure-repo.sh --audit`
+- Apply protection, the merge mode, and the security settings:
+
+  ```bash
+  bash scripts/secure-repo.sh --merge-mode manual   # or: --merge-mode auto
+  ```
+
+  `--merge-mode` sets the repository setting and the workflow's arming
+  variable together. Setting one without the other produces PRs that sit green
+  and never merge, with nothing anywhere explaining why; the audit below
+  reports that state as a hard failure rather than a warning.
+
+- Arm AI review, once you have filled slot 4's prompts:
+
+  ```bash
+  gh secret set CLAUDE_CODE_OAUTH_TOKEN   # from `claude setup-token`
+  gh variable set AI_REVIEW_ENABLED --body true
+  ```
+
+  Until this is done the verdict gate passes with a warning saying plainly
+  that nothing was reviewed. That is deliberate — it lets the gate be a
+  required check from day one — but it is not review.
+
+- Verify everything landed: `bash scripts/secure-repo.sh --audit`
 - Create labels, if using the issue taxonomy: `bash scripts/labels.sh`
 - Confirm `CODEOWNERS` names an account that actually has access to *this*
   repository.
+
+Two of these are settings a GitHub template genuinely cannot carry: the
+dependency graph (without it `dependency-review.yml` cannot run) and
+Dependabot security updates. `secure-repo.sh` enables both.
 
 ## 6. Completion
 
