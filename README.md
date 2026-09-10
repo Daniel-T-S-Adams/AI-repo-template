@@ -7,7 +7,7 @@
 > A secure, agent-native GitHub repository template for Claude Code and Codex. The primary downstream workflow is: create the repository, point an agent that already understands the project at it, and let the agent normalize the template before materializing the real project.
 
 > [!IMPORTANT]
-> **Agent inside a repository created from this template?** If the repository is **not** `Daniel-T-S-Adams/AI-repo-template`, do not treat this README, template examples, optional workflows, or generic documentation as project requirements. Read `CLAUDE.md` or `AGENTS.md` first and execute [Phase 0](docs/PHASE-0.md). No command or setup interview is required.
+> **Agent inside a repository created from this template?** If the repository is **not** `Daniel-T-S-Adams/AI-repo-template`, do not treat this README, template examples, optional workflows, or generic documentation as project requirements. Read `CLAUDE.md` or `AGENTS.md` first and execute [Intake](docs/INTAKE.md). No command or setup interview is required.
 
 ## The Golden Path
 
@@ -17,7 +17,7 @@
 flowchart LR
     A[Create repo from template] --> B[Point Claude or Codex at repo]
     B --> C[Agent detects derived repository]
-    C --> D[Phase 0: normalize template]
+    C --> D[Intake: fill the slots]
     D --> E{Project material already available?}
     E -->|Yes| F[Ingest current-session project]
     E -->|No| G[Leave clean intake-ready substrate]
@@ -27,20 +27,20 @@ flowchart LR
 
 The agent should not make you explain the template, repeat project information it already has, or choose a stack merely because the repository is empty.
 
-### What Phase 0 does
+### What the intake does
 
 Before application work, the first agent:
 
-1. verifies whether the repository is pristine or already contains user/project work;
-2. treats the template as scaffolding, not as application truth;
-3. classifies inherited artifacts as **KEEP / ADAPT / REMOVE / DEFER**;
-4. removes template identity, examples, false configuration, and irrelevant automation;
-5. preserves useful security and repository hygiene;
-6. uses project context already present in the current session instead of re-interviewing the user;
-7. either integrates that project immediately or leaves a truthful, minimal intake-ready substrate;
-8. verifies the resulting repository before committing.
+1. establishes the project from the current session, an initial plan, or the repository — never by guessing;
+2. files that plan into its homes: `docs/spec/` for what is true, `docs/adr/` for why, `docs/checklist.md` for what gates progress, and the first slice's plan for what comes next;
+3. fills the ten slots that vary between projects — document ownership, domain invariants, merge severities, the reviewers, the check command, deterministic feedback, human-only actions, how a PR lands, the unit of work, and who reads what landed;
+4. decides the small, enumerated set of contents the template declares optional;
+5. applies the settings GitHub does not copy into a new repository — hooks, branch protection, labels;
+6. proves the check command fails when something is broken, rather than assuming it would.
 
-See [docs/PHASE-0.md](docs/PHASE-0.md) for the canonical first-agent SOP.
+Everything else is machinery and stays. Unfilled `«slot:»` markers in `CLAUDE.md` are how an agent knows the intake has not run.
+
+See [docs/INTAKE.md](docs/INTAKE.md) for the canonical procedure.
 
 ## Create a Repository
 
@@ -54,7 +54,7 @@ After creation, the recommended interaction is simply:
 
 > Organize and publish the project we have been working on to `owner/repo`.
 
-A correctly configured Claude Code or Codex session should recognize the derived repository and handle Phase 0 automatically.
+A correctly configured Claude Code or Codex session should recognize the derived repository and handle the intake automatically.
 
 ## Agent Support
 
@@ -62,7 +62,7 @@ This template intentionally supports two agent surfaces deeply:
 
 | Agent | Entry point | Behavior |
 |---|---|---|
-| Claude Code | `CLAUDE.md` | Detects source-template vs. derived-repo mode; derived repos run Phase 0 automatically |
+| Claude Code | `CLAUDE.md` | Detects source-template vs. derived-repo mode; derived repos run the intake automatically |
 | Codex | `AGENTS.md` | Same bootstrap contract using the open `AGENTS.md` convention |
 
 Claude Code also receives `.claude/` commands, skills, hooks, and agents. `/project:bootstrap` is an explicit fallback; normal derived-repo entry does not require the user to invoke it.
@@ -79,18 +79,18 @@ Claude Code also receives `.claude/` commands, skills, hooks, and agents. `/proj
 
 ## What Ships
 
-The source template includes a broad security and governance toolkit so Phase 0 can retain the parts appropriate to the incoming project:
+The source template includes a broad security and governance toolkit so the intake can retain the parts appropriate to the incoming project:
 
 - secret-aware `.gitignore`, `.gitattributes`, and `.editorconfig`;
 - Claude Code and Codex instruction surfaces;
 - pre-commit secret scanning and GitHub hardening scripts;
 - issue/PR governance and CODEOWNERS;
 - security documentation and prompt-injection defenses;
-- **19 workflows** in the source template, including security, release, maintenance, and validation capabilities;
+- **20 workflows** in the source template, including security, release, maintenance, and validation capabilities;
 - Claude commands, skills, hooks, and an example agent;
 - compliance and self-test tooling.
 
-Not all of these belong in every derived project. **Phase 0 decides what survives.**
+Not all of these belong in every derived project. **The intake decides what survives.**
 
 ## Source Template Development
 
@@ -114,19 +114,19 @@ bash scripts/secure-repo.sh --audit
 
 | Document | Purpose |
 |---|---|
-| [Phase 0](docs/PHASE-0.md) | Canonical first-agent normalization and project-intake SOP |
+| [Intake](docs/INTAKE.md) | Canonical first-agent normalization and project-intake SOP |
 | [Getting Started](docs/GETTING-STARTED.md) | Short agent-first usage guide |
 | [AI Security](docs/AI-SECURITY.md) | Agent threat model and security boundaries |
 | [Branch Protection](docs/BRANCH-PROTECTION.md) | Repository hardening and rulesets |
 | [Documentation Guide](docs/DOCUMENTATION-GUIDE.md) | Documentation quality standard |
 | [Architecture](docs/ARCHITECTURE.md) | Architecture of the template project itself |
-| [ADRs](docs/decisions/) | Material design decisions |
+| [ADRs](docs/adr/) | Material design decisions |
 
 The full index is in [docs/README.md](docs/README.md).
 
 ## Security
 
-Never commit secrets. Derived repositories should retain the template's security baseline unless Phase 0 can show that a control is irrelevant or has been replaced by an equivalent or stronger project-specific control.
+Never commit secrets. Derived repositories should retain the template's security baseline unless the intake can show that a control is irrelevant or has been replaced by an equivalent or stronger project-specific control.
 
 See [SECURITY.md](SECURITY.md) and [docs/AI-SECURITY.md](docs/AI-SECURITY.md).
 

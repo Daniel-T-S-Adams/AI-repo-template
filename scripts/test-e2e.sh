@@ -100,7 +100,7 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
 
   essential_ok=true
   for f in README.md CLAUDE.md AGENTS.md .repo-template.yaml \
-           docs/PHASE-0.md docs/TEMPLATE-UPGRADE.md \
+           docs/INTAKE.md docs/template/TEMPLATE-UPGRADE.md \
            .claude/commands/bootstrap.md .claude/commands/upgrade-template.md \
            .gitattributes .gitignore scripts/secure-repo.sh \
            templates/hooks/setup-hooks.sh templates/hooks/pre-commit-secrets.sh.template; do
@@ -120,29 +120,29 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Derived-repository mode missing from agent entry files"
   fi
 
-  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/PHASE-0.md && \
-     grep -q 'Current-session context is project input' docs/PHASE-0.md; then
-    pass "Phase 0 carries classification and session-intake contracts"
+  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md && \
+     grep -q 'Current-session context is project input' docs/INTAKE.md; then
+    pass "the intake carries classification and session-intake contracts"
   else
-    fail "Phase 0 contract is incomplete"
+    fail "the intake contract is incomplete"
   fi
 
-  if grep -q '^baseline_id: agent-native-phase0-v1$' .repo-template.yaml && \
+  if grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml && \
      grep -q 'strategy: semantic-reconciliation' .repo-template.yaml; then
     pass "Template provenance marker carries the current reconciliation baseline"
   else
     fail "Template provenance marker is missing or incorrect"
   fi
 
-  if grep -q 'three-way model' docs/TEMPLATE-UPGRADE.md && \
-     grep -q 'docs/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
+  if grep -q 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
+     grep -q 'docs/template/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
     pass "Template upgrade guidance and Claude entrypoint transfer"
   else
     fail "Template upgrade reconciliation contract is incomplete"
   fi
 
-  if grep -q 'docs/PHASE-0.md' .claude/commands/bootstrap.md && \
-     grep -q 'docs/PHASE-0.md' .claude/commands/init-template.md && \
+  if grep -q 'docs/INTAKE.md' .claude/commands/bootstrap.md && \
+     grep -q 'docs/INTAKE.md' .claude/commands/init-template.md && \
      ! grep -qE 'Quick setup|Gather Project Information|Ask for project name' .claude/commands/init-template.md; then
     pass "Bootstrap is canonical and legacy initializer is compatibility-only"
   else

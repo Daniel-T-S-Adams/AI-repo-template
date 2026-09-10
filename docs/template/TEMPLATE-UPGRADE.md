@@ -2,23 +2,24 @@
 
 > Canonical, model-neutral procedure for upgrading a repository descended from `Daniel-T-S-Adams/AI-repo-template` without resetting or overwriting legitimate project evolution.
 
-**Version:** 1.0  
-**Current compatibility baseline:** `agent-native-phase0-v1`  
+**Version:** 1.1  
+**Current compatibility baseline:** `slot-intake-v1`  
+**Previous baseline:** `agent-native-phase0-v1` — superseded by [ADR 008](../adr/008-slot-based-intake.md)  
 **Applies to:** Claude Code, Codex, and other capable engineering agents working in a repository with confirmed or suspected `AI-repo-template` ancestry.
 
 ## Purpose
 
-Phase 0 answers: **How does a fresh template instance become the real project?**
+The intake answers: **How does a fresh template instance become the real project?**
 
 Template Upgrade answers: **How does an existing project adopt later improvements from `AI-repo-template` without becoming the template again?**
 
-These are separate operations. A mature project must not rerun Phase 0 merely because the source template changed.
+These are separate operations. A mature project must not rerun the intake merely because the source template changed.
 
 ## Core Principle
 
 **Project evolution is authoritative. Template ancestry is advisory.**
 
-Never make an established repository match current `AI-repo-template` file-for-file. Intentional divergence is expected after Phase 0.
+Never make an established repository match current `AI-repo-template` file-for-file. Intentional divergence is expected after the intake.
 
 ## Repository Router
 
@@ -27,9 +28,9 @@ Determine the path from repository evidence before changing anything.
 | State | Indicators | Path |
 |---|---|---|
 | Source template | Repository is `Daniel-T-S-Adams/AI-repo-template` | Maintain the template; do not run downstream normalization |
-| Fresh current instance | `.repo-template.yaml` exists, generic template README/agent instructions remain, little or no project-specific work | Phase 0 |
+| Fresh current instance | `.repo-template.yaml` exists, generic template README/agent instructions remain, little or no project-specific work | Intake |
 | Existing current-derived project | Marker exists and project-specific source/docs/instructions are established | Normal project work; use Template Upgrade only when an upgrade/reconciliation is requested or compatibility is being checked |
-| Legacy pristine instance | Marker absent, strong template ancestry evidence, little or no project work | Reconcile to current substrate, add provenance, then Phase 0 |
+| Legacy pristine instance | Marker absent, strong template ancestry evidence, little or no project work | Reconcile to current substrate, add provenance, then the intake |
 | Legacy established project | Marker absent, strong template ancestry evidence, substantial project work | Template Upgrade using conservative legacy-baseline inference |
 | Uncertain ancestry/state | Evidence conflicts or provenance cannot be established confidently | Preserve project state; perform assessment only until the ambiguity is resolved |
 
@@ -149,7 +150,7 @@ A missing template file in a mature project is not automatically drift.
 
 ### Path A — PRISTINE legacy instance
 
-When ancestry is confirmed and no meaningful project work exists, the inherited substrate can be refreshed to the current template generation. Preserve repository identity and GitHub history/settings. After the refreshed substrate is validated, add/update `.repo-template.yaml` and continue through Phase 0 for real project intake.
+When ancestry is confirmed and no meaningful project work exists, the inherited substrate can be refreshed to the current template generation. Preserve repository identity and GitHub history/settings. After the refreshed substrate is validated, add/update `.repo-template.yaml` and continue through the intake for real project intake.
 
 There is normally no reason to delete and recreate the GitHub repository.
 
@@ -171,7 +172,7 @@ Produce a reconciliation assessment first. Avoid broad changes until project own
 
 If `.repo-template.yaml` remains in the project, project-specific `CLAUDE.md` and `AGENTS.md` should retain a concise **Template Ancestry** rule equivalent to:
 
-> This project descends from `Daniel-T-S-Adams/AI-repo-template`. `.repo-template.yaml` records the last reconciled compatibility baseline. Do not rerun Phase 0 for normal project work. When a template upgrade or compatibility review is requested, follow the canonical `docs/TEMPLATE-UPGRADE.md` referenced by the marker and reconcile semantically rather than synchronizing files.
+> This project descends from `Daniel-T-S-Adams/AI-repo-template`. `.repo-template.yaml` records the last reconciled compatibility baseline. Do not rerun the intake for normal project work. When a template upgrade or compatibility review is requested, follow the canonical `docs/template/TEMPLATE-UPGRADE.md` referenced by the marker and reconcile semantically rather than synchronizing files.
 
 This routing rule is intentionally small. It allows future agents to choose the correct path without carrying the source template's generic project instructions.
 
@@ -227,7 +228,7 @@ At minimum verify:
 
 - `CLAUDE.md` and `AGENTS.md` remain project-specific;
 - if the provenance marker remains, the Template Ancestry routing rule remains discoverable;
-- Phase 0 is not presented as the normal path for a mature project.
+- the intake is not presented as the normal path for a mature project.
 
 ### Security and governance
 
@@ -286,4 +287,4 @@ Older marked baselines and legacy unmarked repositories must remain supported by
 ---
 
 **Referenced by:** `.repo-template.yaml`, `CLAUDE.md`, `AGENTS.md`, `.claude/commands/upgrade-template.md`, `.claude/skills/template-upgrade/SKILL.md`  
-**See also:** [Phase 0](PHASE-0.md) | [ADR 007](decisions/007-template-upgrade-reconciliation.md) | [AI Security](AI-SECURITY.md)
+**See also:** [Intake](../INTAKE.md) | [ADR 007](../adr/007-template-upgrade-reconciliation.md) | [AI Security](../AI-SECURITY.md)

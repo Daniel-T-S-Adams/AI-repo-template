@@ -1,6 +1,20 @@
 # Dependency Review
-# Scans PRs for vulnerable or license-restricted dependencies.
-# Blocks PRs that introduce moderate+ severity vulnerabilities.
+# Scans PRs for vulnerable or license-restricted dependencies, and blocks
+# those introducing moderate+ severity vulnerabilities.
+#
+# The action requires GitHub's dependency graph. Without it, it fails with
+# "Dependency review is not supported on this repository", which says nothing
+# about what to do — and a repository generated from this template has no
+# dependency manifests at all until its stack is chosen, so that opaque
+# failure would be the first thing every derived project sees.
+#
+# The preflight below separates the two cases, because they mean opposite
+# things:
+#   - manifests exist, graph is off  -> a real misconfiguration. FAIL loudly.
+#   - no manifests at all            -> nothing to review. Pass, with a
+#                                       warning annotation saying so, so a
+#                                       green check is never mistaken for
+#                                       "the dependencies were checked".
 
 name: Dependency Review
 
@@ -21,7 +35,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Preflight
+        id: pre
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Manifest globs the dependency graph actually supports.
+          MANIFESTS=$(git ls-files -- \
+            '*package.json' '*package-lock.json' '*yarn.lock' '*pnpm-lock.yaml' \
+            '*requirements*.txt' '*Pipfile*' '*pyproject.toml' '*poetry.lock' \
+            '*Cargo.toml' '*Cargo.lock' '*go.mod' '*go.sum' \
+            '*pom.xml' '*build.gradle' '*build.gradle.kts' \
+            '*Gemfile' '*Gemfile.lock' '*composer.json' '*composer.lock' \
+            '*.csproj' '*.vbproj' '*packages.config' \
+            | head -50)
+
+          if [ -z "$MANIFESTS" ]; then
+            echo "::warning title=No dependency manifests::This repository declares no dependencies, so there is nothing for dependency review to check. This check is passing because no manifest exists, NOT because dependencies were reviewed. It begins enforcing as soon as a manifest lands."
+            echo "No dependency manifests found."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Dependency manifests found:"
+          echo "$MANIFESTS" | sed 's/^/  /'
+
+          # Manifests exist, so the graph must be available. Probing it here
+          # turns an opaque action failure into an actionable one.
+          if ! gh api "repos/$GITHUB_REPOSITORY/dependency-graph/compare/${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" >/dev/null 2>&1; then
+            echo "::error title=Dependency graph unavailable::This repository declares dependencies but the dependency graph is not enabled, so they cannot be reviewed. Enable it: Settings > Code security > Dependency graph, or run 'bash scripts/secure-repo.sh'."
+            exit 1
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+
       - name: Dependency Review
+        if: steps.pre.outputs.run == 'true'
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate

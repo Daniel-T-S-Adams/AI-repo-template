@@ -1,7 +1,7 @@
 # OpenSSF Scorecard — source-template supply-chain security scoring
 #
 # GitHub template creation copies workflow files. This source-project publishing
-# job must therefore stay inert in derived repositories unless Phase 0 explicitly
+# job must therefore stay inert in derived repositories unless the intake explicitly
 # adapts it for that project's own public security posture.
 
 name: OpenSSF Scorecard

@@ -1,7 +1,7 @@
 # CODEOWNERS — security-sensitive review ownership
 #
 # Source-template mode: @Daniel-T-S-Adams is the correct owner for this repository.
-# Derived-repository mode: Phase 0 must validate these owners for the new
+# Derived-repository mode: the intake must validate these owners for the new
 # repository before relying on CODEOWNERS review behavior.
 #
 # To make CODEOWNER review blocking, enable the corresponding branch/ruleset

@@ -51,7 +51,7 @@ This template ships seven working skills:
 | `task-cleanup` | Archive or clear completed task records |
 | `template-upgrade` | Reconcile an AI-repo-template-derived project with a newer template baseline while preserving project-specific work |
 
-`template-upgrade` is intentionally paired with the model-neutral [`docs/TEMPLATE-UPGRADE.md`](../../docs/TEMPLATE-UPGRADE.md). Claude may auto-discover the skill, but Codex and other agents use the canonical SOP directly.
+`template-upgrade` is intentionally paired with the model-neutral [`docs/template/TEMPLATE-UPGRADE.md`](../../docs/template/TEMPLATE-UPGRADE.md). Claude may auto-discover the skill, but Codex and other agents use the canonical SOP directly.
 
 ## Creating a Skill
 
@@ -105,4 +105,4 @@ PY
 
 - [Commands](../commands/) — explicit project workflows
 - [Agents](../agents/README.md) — specialized sub-agents
-- [Template Upgrade SOP](../../docs/TEMPLATE-UPGRADE.md) — cross-agent downstream reconciliation
+- [Template Upgrade SOP](../../docs/template/TEMPLATE-UPGRADE.md) — cross-agent downstream reconciliation

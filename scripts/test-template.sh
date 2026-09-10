@@ -108,7 +108,7 @@ run_layer_1() {
   # 1.2 Workflow count
   local wf_count
   wf_count=$(find .github/workflows -name '*.yml' -type f | wc -l | tr -d ' ')
-  assert_count "GitHub Actions workflows" 18 "$wf_count"
+  assert_count "GitHub Actions workflows" 20 "$wf_count"
 
   # 1.3 Issue template count (excluding config.yml)
   local tmpl_count
@@ -217,7 +217,7 @@ run_layer_1() {
 
   # 1.8 README claims match (spot checks)
   assert_contains README.md "Claude Code and Codex" "README states the two supported agents"
-  assert_contains README.md "19 workflow" "README mentions 19 workflows"
+  assert_contains README.md "20 workflow" "README mentions 20 workflows"
 
   # 1.9 Agent-focus gate: the template supports Claude Code + Codex ONLY.
   # Any resurfacing reference to a removed agent is a regression. CHANGELOG
@@ -226,10 +226,10 @@ run_layer_1() {
   # (endCursor, CURSOR) never false-positive.
   local stale_agents
   stale_agents=$(git grep -ilE "cursorrule[s]|windsu[r]frules|gemin[i]|copilo[t]|aide[r]|windsu[r]f" -- \
-    ':!CHANGELOG.md' ':!CONTRIBUTORS.md' ':!docs/decisions/004-two-agent-focus.md' ':!repo-template-example' 2>/dev/null || true)
+    ':!CHANGELOG.md' ':!CONTRIBUTORS.md' ':!docs/adr/004-two-agent-focus.md' ':!repo-template-example' 2>/dev/null || true)
   local stale_cursor
   stale_cursor=$(git grep -lE "\\bCursor\\b" -- \
-    ':!CHANGELOG.md' ':!CONTRIBUTORS.md' ':!docs/decisions/004-two-agent-focus.md' ':!repo-template-example' 2>/dev/null || true)
+    ':!CHANGELOG.md' ':!CONTRIBUTORS.md' ':!docs/adr/004-two-agent-focus.md' ':!repo-template-example' 2>/dev/null || true)
   if [[ -z "$stale_agents" && -z "$stale_cursor" ]]; then
     pass "Agent focus: no references to removed agents (Claude Code + Codex only)"
   else

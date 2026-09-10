@@ -24,25 +24,24 @@ If you have already been designing or building the project in a Claude Code or C
 
 The agent should not require a separate template explanation or repeat questions whose answers already exist in the current session.
 
-### 3. Phase 0 runs first
+### 3. The intake runs first
 
-A derived repository still contains source-template material. `CLAUDE.md` and `AGENTS.md` tell the first agent to execute [Phase 0](PHASE-0.md) automatically.
+A derived repository arrives with the pipeline already built and its project-specific answers left blank. `CLAUDE.md` and `AGENTS.md` tell the first agent to run [Intake](INTAKE.md) while any `«slot:»` marker remains.
 
-Phase 0:
+The intake:
 
-- verifies whether the repo is pristine or already contains custom work;
-- classifies inherited artifacts as KEEP / ADAPT / REMOVE / DEFER;
-- removes template identity and false project assumptions;
-- retains useful security/repository hygiene;
-- ingests project material already available to the agent; or
-- leaves a minimal intake-ready substrate if no real project has been provided yet.
+- establishes the project from material the agent already has, and asks only if there is none;
+- files the plan into `docs/spec/`, `docs/adr/`, `docs/checklist.md`, and the first slice's plan;
+- fills the ten slots that vary between projects;
+- decides the enumerated set of optional contents, and leaves the machinery alone;
+- applies the repository settings GitHub does not copy over.
 
-No setup wizard is required.
+No setup wizard is required, and nothing is deleted on a guess.
 
 ```mermaid
 flowchart LR
     A[Template-derived repo] --> B[First agent enters]
-    B --> C[Phase 0]
+    B --> C[Intake]
     C --> D{Project context available?}
     D -->|Yes| E[Materialize project]
     D -->|No| F[Intake-ready substrate]
@@ -73,7 +72,7 @@ Cleanup should not casually remove safeguards. Useful defaults include:
 - AI security boundaries;
 - read-only security audit capability.
 
-For a derived repository, Phase 0 keeps, adapts, or removes each control based on actual project needs.
+For a derived repository, the intake keeps, adapts, or removes each control based on actual project needs.
 
 See [AI-SECURITY.md](AI-SECURITY.md) and [BRANCH-PROTECTION.md](BRANCH-PROTECTION.md).
 
@@ -107,4 +106,4 @@ At that point:
 ---
 
 **Referenced by:** [README.md](../README.md)  
-**See also:** [Phase 0](PHASE-0.md) | [Documentation Guide](DOCUMENTATION-GUIDE.md) | [AI Security](AI-SECURITY.md)
+**See also:** [Intake](INTAKE.md) | [Documentation Guide](DOCUMENTATION-GUIDE.md) | [AI Security](AI-SECURITY.md)

@@ -1,0 +1,304 @@
+# AI Review — the primary review layer
+#
+# Each configured reviewer reads the PR diff and emits a machine-readable
+# verdict bound to the head commit. The gate adds them up. Design rules, all
+# of which exist because the alternative failed somewhere:
+#
+#   - Verdicts are JSON artifacts, never prose grepped for keywords.
+#   - Verdicts are bound to the head SHA, so an approval never carries over to
+#     code that changed after it.
+#   - Review is FAIL-CLOSED once armed: a missing credential, a CLI error, a
+#     malformed verdict or a stale SHA all fail the gate. The primary review
+#     layer must never silently not-happen.
+#   - Reviewers are untrusted-input processors: read-only tools, `contents:
+#     read`, no fork PRs. A reviewer that could write to the repository would
+#     be a path straight into it.
+#   - Any `must_fix` finding with an `approve` verdict is a self-contradiction
+#     and is rejected as invalid.
+#
+# Arming: set the repository variable AI_REVIEW_ENABLED=true and add the
+# secret CLAUDE_CODE_OAUTH_TOKEN (`claude setup-token`) or ANTHROPIC_API_KEY.
+# Until armed, the gate reports a loud not-armed pass so it can be added as a
+# required check from day one without hanging every PR. See docs/INTAKE.md
+# slot 4 and slot 8.
+
+name: AI Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Single source of truth for the reviewer set. The gate derives its expected
+  # set from this same output, so adding a reviewer to the matrix cannot
+  # silently leave the gate enforcing the old, smaller set.
+  config:
+    name: "AI review: config"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      reviewers: ${{ steps.set.outputs.reviewers }}
+      ids: ${{ steps.set.outputs.ids }}
+      armed: ${{ steps.set.outputs.armed }}
+    steps:
+      - name: Define reviewers
+        id: set
+        env:
+          # «slot: the reviewer set. Start with two — one broad correctness
+          # lens and one deep pass over the domain's invariants. Add a third
+          # only for a distinct, non-overlapping focus, or to deliberately
+          # vary the model over the same remit. Pin explicit model IDs.»
+          REVIEWERS: >-
+            [
+              {"id":"general","model":"claude-sonnet-5","prompt":".github/review/general.md"},
+              {"id":"invariants","model":"claude-opus-5","prompt":".github/review/invariants.md"}
+            ]
+        run: |
+          COMPACT=$(echo "$REVIEWERS" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin),separators=(",",":")))')
+          echo "reviewers=$COMPACT" >> "$GITHUB_OUTPUT"
+          echo "ids=$(echo "$COMPACT" | python3 -c 'import json,sys; print(",".join(r["id"] for r in json.load(sys.stdin)))')" >> "$GITHUB_OUTPUT"
+          if [ "${{ vars.AI_REVIEW_ENABLED }}" = "true" ]; then
+            echo "armed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "armed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  review:
+    needs: config
+    # Same-repo, non-draft PRs only. A fork PR's token is read-only and could
+    # not post a comment anyway; a draft is not a merge candidate, so marking
+    # it ready is available as a deliberate human approval step.
+    if: >
+      needs.config.outputs.armed == 'true' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        reviewer: ${{ fromJSON(needs.config.outputs.reviewers) }}
+    name: "AI review: ${{ matrix.reviewer.id }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REVIEWER: ${{ matrix.reviewer.id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      # A missing credential is recorded as a skipped verdict, which FAILS the
+      # gate. Never treated as "no review needed".
+      - name: Reviewer credential check
+        id: key
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error title=AI review credential missing::AI_REVIEW_ENABLED is true but neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set. Reviewer '$REVIEWER' cannot run; the verdict gate will fail."
+            printf '{"reviewer":"%s","head_sha":"%s","verdict":"skipped_no_key","findings":[]}\n' \
+              "$REVIEWER" "$HEAD_SHA" > "verdict-$REVIEWER.json"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pinned: never install latest in a release-critical path.
+      - name: Install pinned Claude Code CLI
+        if: steps.key.outputs.present == 'true'
+        run: npm install -g @anthropic-ai/claude-code@2.1.261
+
+      - name: Prepare diff
+        if: steps.key.outputs.present == 'true'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          MAX_DIFF_BYTES: "400000"
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          git diff "origin/$BASE_REF...HEAD" > /tmp/pr.diff
+          BYTES=$(wc -c < /tmp/pr.diff)
+          if [ "$BYTES" -gt "$MAX_DIFF_BYTES" ]; then
+            head -c "$MAX_DIFF_BYTES" /tmp/pr.diff > /tmp/pr.diff.t && mv /tmp/pr.diff.t /tmp/pr.diff
+            echo "::warning title=Diff truncated::PR diff was ${BYTES} bytes; reviewer '$REVIEWER' saw the first ${MAX_DIFF_BYTES}."
+          fi
+
+      - name: Run reviewer
+        id: reviewer
+        if: steps.key.outputs.present == 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_DIFF: /tmp/pr.diff
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PROMPT_FILE: ${{ matrix.reviewer.prompt }}
+          MODEL: ${{ matrix.reviewer.model }}
+        run: |
+          # An empty env var can confuse CLI auth selection — drop unset ones.
+          [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && unset CLAUDE_CODE_OAUTH_TOKEN
+          [ -z "$ANTHROPIC_API_KEY" ] && unset ANTHROPIC_API_KEY
+          {
+            cat "$PROMPT_FILE"
+            echo
+            echo "## This PR"
+            echo "Title: ${PR_TITLE}"
+            echo "HEAD_SHA: ${HEAD_SHA}"
+            echo "REVIEWER_ID: ${REVIEWER}"
+            echo "Diff file (unified): ${PR_DIFF}"
+          } > /tmp/prompt.md
+          set +e
+          claude -p "$(cat /tmp/prompt.md)" \
+            --model "$MODEL" \
+            --allowedTools "Read,Grep,Glob" \
+            > /tmp/raw-output.txt 2> /tmp/claude-err.log
+          STATUS=$?
+          set -e
+          if [ $STATUS -ne 0 ]; then
+            echo "reviewer CLI exited $STATUS"; sed -n '1,40p' /tmp/claude-err.log
+            printf '{"reviewer":"%s","head_sha":"%s","verdict":"error","findings":[]}\n' \
+              "$REVIEWER" "$HEAD_SHA" > "verdict-$REVIEWER.json"
+            echo "succeeded=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "succeeded=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate verdict
+        if: >
+          steps.key.outputs.present == 'true' &&
+          steps.reviewer.outputs.succeeded == 'true'
+        run: |
+          python3 - "$HEAD_SHA" "$REVIEWER" <<'PY'
+          import json, sys, re
+          head_sha, reviewer = sys.argv[1], sys.argv[2]
+          out = open('/tmp/raw-output.txt').read()
+          # Reviewers are told JSON-only; strip any accidental fencing.
+          m = re.search(r'\{.*\}', out, re.S)
+          invalid = {"reviewer": reviewer, "head_sha": head_sha,
+                     "verdict": "invalid", "findings": []}
+          try:
+              v = json.loads(m.group(0)) if m else None
+          except Exception:
+              v = None
+          ok = (
+              isinstance(v, dict)
+              and v.get("reviewer") == reviewer
+              and v.get("head_sha") == head_sha
+              and v.get("verdict") in ("approve", "changes_required")
+              and isinstance(v.get("findings"), list)
+              and all(isinstance(f, dict)
+                      and f.get("severity") in ("must_fix", "should_fix", "nit")
+                      and isinstance(f.get("path"), str)
+                      and isinstance(f.get("summary"), str)
+                      for f in v.get("findings", []))
+          )
+          if ok:
+              if any(f["severity"] == "must_fix" for f in v["findings"]) and v["verdict"] != "changes_required":
+                  print("consistency violation: must_fix with approve -> invalid")
+                  v = invalid
+          else:
+              print("verdict failed schema/SHA validation -> invalid")
+              v = invalid
+          json.dump(v, open(f"verdict-{reviewer}.json", "w"), indent=2)
+          print(json.dumps(v, indent=2)[:2000])
+          PY
+
+      - name: Post PR comment
+        if: steps.key.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - "$REVIEWER" <<'PY' > /tmp/comment.md
+          import json, sys
+          v = json.load(open(f"verdict-{sys.argv[1]}.json"))
+          order = {"must_fix": 0, "should_fix": 1, "nit": 2}
+          lines = [f"## AI review ({v['reviewer']}) — `{v['verdict']}` @ {v['head_sha'][:12]}", ""]
+          if not v["findings"]:
+              lines.append("No findings.")
+          for f in sorted(v["findings"], key=lambda f: order.get(f.get("severity"), 3)):
+              lines.append(f"- **{f.get('severity')}** `{f.get('path')}:{f.get('line', '?')}` — {f.get('summary')}")
+              if f.get("fix"):
+                  lines.append(f"  - fix: {f['fix']}")
+          lines += ["", "_The machine verdict is the artifact; this comment is informational._"]
+          print("\n".join(lines))
+          PY
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file /tmp/comment.md
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: verdict-${{ matrix.reviewer.id }}
+          path: verdict-${{ matrix.reviewer.id }}.json
+          if-no-files-found: warn
+
+  verdict-gate:
+    name: "AI review: verdict gate"
+    needs: [config, review]
+    if: always() && needs.review.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      EXPECTED: ${{ needs.config.outputs.ids }}
+      ARMED: ${{ needs.config.outputs.armed }}
+    steps:
+      - name: Not armed
+        if: env.ARMED != 'true'
+        run: |
+          echo "::warning title=AI review is NOT armed::AI_REVIEW_ENABLED is not 'true'. No AI review ran for this PR. This check is passing because review is switched off, NOT because the change was reviewed. See docs/INTAKE.md slot 4."
+          echo "AI review not armed — nothing was reviewed."
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        if: env.ARMED == 'true'
+        with:
+          pattern: verdict-*
+          merge-multiple: true
+
+      - name: Evaluate verdicts
+        if: env.ARMED == 'true'
+        run: |
+          python3 - "$HEAD_SHA" "$EXPECTED" <<'PY'
+          import glob, json, sys
+          head_sha = sys.argv[1]
+          expected = {r for r in sys.argv[2].split(",") if r}
+          verdicts = {}
+          for f in sorted(glob.glob("verdict-*.json")):
+              try:
+                  v = json.load(open(f))
+              except Exception:
+                  print(f"FAIL: {f} is not valid JSON")
+                  sys.exit(1)
+              verdicts[v.get("reviewer")] = v
+          missing = expected - set(verdicts)
+          if missing:
+              print(f"FAIL: missing verdicts from {sorted(missing)} — review is fail-closed.")
+              sys.exit(1)
+          failed = False
+          for name in sorted(expected):
+              v = verdicts[name]
+              if v.get("head_sha") != head_sha:
+                  print(f"FAIL [{name}]: verdict is for {v.get('head_sha')}, head is {head_sha}")
+                  failed = True
+              elif v["verdict"] == "approve":
+                  print(f"OK   [{name}]: approve")
+              elif v["verdict"] == "skipped_no_key":
+                  print(f"FAIL [{name}]: reviewer did not run — credential missing. "
+                        "Set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY.")
+                  failed = True
+              else:
+                  print(f"FAIL [{name}]: {v['verdict']}")
+                  for fi in v.get("findings", []):
+                      if fi.get("severity") == "must_fix":
+                          print(f"       must_fix {fi.get('path')}:{fi.get('line')} {fi.get('summary')}")
+                  failed = True
+          sys.exit(1 if failed else 0)
+          PY

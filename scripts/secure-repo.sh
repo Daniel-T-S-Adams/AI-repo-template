@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 # secure-repo.sh — Automated GitHub repository security hardening
-# Usage: ./scripts/secure-repo.sh [--audit] [--repo owner/repo] [--skip-wiki] [--skip-projects]
+# Usage: ./scripts/secure-repo.sh [--audit] [--repo owner/repo] [--skip-wiki]
+#                                  [--skip-projects] [--merge-mode auto|manual]
 #   --audit  Read-only mode: reports current security posture and the exact
 #            command each fix would run. Makes ZERO changes (GET requests only).
+#   --merge-mode  How a green PR lands (docs/INTAKE.md slot 8). Default: manual.
+#            auto   — allow_auto_merge on + repo variable AUTO_MERGE_ENABLED=true.
+#                     A green PR merges itself.
+#            manual — allow_auto_merge off + variable removed. A green PR waits
+#                     for a human to press Merge.
+#            These are set as a matched pair on purpose: arming the workflow
+#            without allow_auto_merge, or the reverse, produces PRs that hang
+#            with no explanation.
 #   (no flag) Applies hardening (PUT/POST/PATCH mutations).
 # If no --repo specified, auto-detects from git remote.
 # Requires: gh CLI authenticated (admin access needed for hardening mode).
@@ -21,6 +30,7 @@ REPO=""
 SKIP_WIKI=false
 SKIP_PROJECTS=false
 AUDIT=false
+MERGE_MODE="manual"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -33,6 +43,12 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       REPO="$2"; shift 2 ;;
+    --merge-mode)
+      case "${2:-}" in
+        auto|manual) MERGE_MODE="$2" ;;
+        *) echo "Error: --merge-mode must be 'auto' or 'manual'" >&2; exit 1 ;;
+      esac
+      shift 2 ;;
     --skip-wiki) SKIP_WIKI=true; shift ;;
     --skip-projects) SKIP_PROJECTS=true; shift ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -140,8 +156,26 @@ if $AUDIT; then
 
   echo ""
   echo "Platform Hardening (2025-26 features):"
-  audit_check "Auto-merge enabled" \
-    "gh api repos/$REPO --jq '.allow_auto_merge' | grep -q true" \
+  # Merge mode coherence. The failure this catches is silent: a repository
+  # where the setting and the workflow variable disagree produces PRs that sit
+  # green and unmerged forever, with nothing anywhere saying why.
+  MM_SETTING=$(gh api "repos/$REPO" --jq '.allow_auto_merge' 2>/dev/null || echo "unknown")
+  MM_VAR=$(gh variable list --repo "$REPO" --json name --jq '.[] | select(.name=="AUTO_MERGE_ENABLED") | .name' 2>/dev/null || echo "")
+  if [[ "$MM_SETTING" == "true" && -n "$MM_VAR" ]]; then
+    echo -e "  ${GREEN}[PASS]${NC} Merge mode: auto (allow_auto_merge on, AUTO_MERGE_ENABLED set)"
+    PASS=$((PASS + 1))
+  elif [[ "$MM_SETTING" != "true" && -z "$MM_VAR" ]]; then
+    echo -e "  ${GREEN}[PASS]${NC} Merge mode: manual (a green PR waits for a human to press Merge)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "  ${RED}[FAIL]${NC} Merge mode INCOHERENT — allow_auto_merge=$MM_SETTING, AUTO_MERGE_ENABLED=$([[ -n "$MM_VAR" ]] && echo set || echo unset)"
+    echo "         A PR can end up green and never merge, with no explanation anywhere."
+    echo "         Fix: bash scripts/secure-repo.sh --merge-mode auto   (or --merge-mode manual)"
+    FAIL=$((FAIL + 1))
+  fi
+
+  audit_check "Dependency graph (required by dependency-review.yml)" \
+    "gh api repos/$REPO/dependency-graph/compare/$DEFAULT_BRANCH...$DEFAULT_BRANCH" \
     "bash scripts/secure-repo.sh"
   audit_check "Actions SHA-pinning platform-enforced" \
     "gh api repos/$REPO/actions/permissions --jq '.sha_pinning_required' | grep -q true" \
@@ -226,8 +260,33 @@ else
   # --- 2025-26 platform hardening ---
   echo ""
   echo "Platform Hardening:"
-  run_check "Auto-merge enabled (pairs with required checks for gated Dependabot merges)" \
-    "gh api -X PATCH repos/$REPO -F allow_auto_merge=true --silent"
+  # Merge mode is a matched pair: the repository setting and the workflow's
+  # arming variable must agree, or PRs hang waiting on a merge that will never
+  # be armed (or a workflow arms a merge the repository will not perform).
+  if [[ "$MERGE_MODE" == "auto" ]]; then
+    run_check "Merge mode 'auto': allow_auto_merge enabled" \
+      "gh api -X PATCH repos/$REPO -F allow_auto_merge=true --silent"
+    run_check "Merge mode 'auto': AUTO_MERGE_ENABLED variable set" \
+      "gh variable set AUTO_MERGE_ENABLED --body true --repo $REPO"
+    echo -e "  ${YELLOW}[NOTE]${NC} auto-merge.yml refuses to arm unless a required-status-check rule also exists — that is deliberate, not a bug"
+  else
+    run_check "Merge mode 'manual': allow_auto_merge disabled" \
+      "gh api -X PATCH repos/$REPO -F allow_auto_merge=false --silent"
+    run_check "Merge mode 'manual': AUTO_MERGE_ENABLED variable removed" \
+      "gh variable delete AUTO_MERGE_ENABLED --repo $REPO 2>/dev/null || true"
+    echo -e "  ${YELLOW}[NOTE]${NC} a green PR will wait for you to press Merge. Required checks still gate it. Re-run with --merge-mode auto to change."
+  fi
+
+  # dependency-review.yml needs the dependency graph; without it the action
+  # fails with an opaque "not supported on this repository".
+  run_check "Dependency graph enabled (required by dependency-review)" \
+    "gh api -X PATCH repos/$REPO --silent --input - <<'DGEOF'
+{\"security_and_analysis\": {\"dependency_graph\": {\"status\": \"enabled\"}}}
+DGEOF" \
+    "Always on for public repos; may be unavailable on some plans"
+
+  run_check "Dependabot security updates" \
+    "gh api -X PUT repos/$REPO/automated-security-fixes --silent"
 
   run_check "Actions SHA-pinning required (platform-enforced)" \
     "gh api -X PUT repos/$REPO/actions/permissions --input - <<'SPEOF'
