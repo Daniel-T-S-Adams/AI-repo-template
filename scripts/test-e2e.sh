@@ -78,13 +78,20 @@ cleanup() {
       echo "  Delete it manually: gh repo delete $r --yes" >&2
       CLEANUP_FAILED=1
     fi
-    # A leak must change the exit status. Reporting "ALL E2E TESTS PASSED"
-    # while leaving a real repository behind is exactly the masked failure
-    # CLAUDE.md rule 4 forbids — and this suite did that before this change.
   done
   for d in "${DIRS_TO_DELETE[@]}"; do
     rm -rf "$d" 2>/dev/null
   done
+
+  # The gate lives HERE, not in the script body. cleanup() runs only as the
+  # EXIT trap, which fires after the body has already selected its exit
+  # status, so a check down there reads CLEANUP_FAILED before this function
+  # has ever assigned it. `exit` from inside an EXIT trap overrides the
+  # status the body chose — that is what makes a leak fail the run.
+  if [[ $CLEANUP_FAILED -ne 0 ]]; then
+    echo -e "${RED}Test resources were leaked — see above. Failing the run.${NC}" >&2
+    exit 1
+  fi
 }
 trap cleanup EXIT
 
@@ -355,10 +362,5 @@ else
 fi
 echo "============================================"
 echo ""
-
-if [[ $CLEANUP_FAILED -ne 0 ]]; then
-  echo -e "${RED}Test resources were leaked — see above. Failing the run.${NC}" >&2
-  exit 1
-fi
 
 exit "$FAIL"
