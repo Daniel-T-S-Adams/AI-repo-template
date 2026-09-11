@@ -115,11 +115,21 @@ echo "============================================"
 header "5.1: Create from Template — First-Agent Contract"
 
 echo "  Creating repository from template..."
-if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --private >/dev/null 2>&1 && \
-   sleep 3 && \
-   git clone "https://github.com/$TEST_REPO.git" "$WORK_DIR/$REPO_NAME" >/dev/null 2>&1; then
-  pass "Repository created from template: $TEST_REPO"
+# Register for cleanup the instant the repository exists, NOT after the clone.
+# Anything between creation and registration is a window where a live
+# repository is untracked: cleanup() iterates an empty list, the leak gate
+# never fires, and the suite reports a create failure while the repository
+# persists unmentioned. Cloning a --private repo depends on git credentials,
+# so that window is real, not theoretical.
+if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --private >/dev/null 2>&1; then
   REPOS_TO_DELETE+=("$TEST_REPO")
+  sleep 3
+  if git clone "https://github.com/$TEST_REPO.git" "$WORK_DIR/$REPO_NAME" >/dev/null 2>&1; then
+    pass "Repository created from template: $TEST_REPO"
+  else
+    fail "Created $TEST_REPO but could not clone it (git credentials for HTTPS?)"
+    TEST_REPO_SKIP=true
+  fi
 else
   fail "Failed to create repository from template"
   TEST_REPO_SKIP=true
