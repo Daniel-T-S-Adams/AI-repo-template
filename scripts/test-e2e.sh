@@ -32,6 +32,19 @@ if [[ -z "$OWNER" ]]; then
   exit 1
 fi
 
+# Preflight the scope needed to clean up, BEFORE creating anything. Without
+# this the suite creates a repository it cannot delete and leaks it. The
+# header has always claimed this requirement; nothing enforced it.
+if ! $KEEP; then
+  if ! gh auth status 2>&1 | grep -q 'delete_repo'; then
+    echo -e "${RED}ERROR: the gh token lacks the 'delete_repo' scope.${NC}" >&2
+    echo "This suite creates a real repository and must be able to delete it." >&2
+    echo "Grant it:  gh auth refresh -h github.com -s delete_repo" >&2
+    echo "Or run with --keep to preserve test resources deliberately." >&2
+    exit 1
+  fi
+fi
+
 TEMPLATE_REPO="$OWNER/AI-repo-template"
 TIMESTAMP=$(date +%s)
 TEST_REPO="${OWNER}/e2e-test-template-${TIMESTAMP}"
@@ -40,6 +53,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 WORK_DIR=$(mktemp -d)
 
 REPOS_TO_DELETE=()
+CLEANUP_FAILED=0
 DIRS_TO_DELETE=("$WORK_DIR")
 
 # shellcheck disable=SC2317,SC2329
@@ -57,7 +71,16 @@ cleanup() {
   echo ""
   echo "Cleaning up..."
   for r in "${REPOS_TO_DELETE[@]}"; do
-    gh repo delete "$r" --yes 2>/dev/null && echo "  Deleted: $r" || echo "  Failed to delete: $r"
+    if gh repo delete "$r" --yes 2>/dev/null; then
+      echo "  Deleted: $r"
+    else
+      echo -e "  ${RED}LEAKED: $r could not be deleted${NC}" >&2
+      echo "  Delete it manually: gh repo delete $r --yes" >&2
+      CLEANUP_FAILED=1
+    fi
+    # A leak must change the exit status. Reporting "ALL E2E TESTS PASSED"
+    # while leaving a real repository behind is exactly the masked failure
+    # CLAUDE.md rule 4 forbids — and this suite did that before this change.
   done
   for d in "${DIRS_TO_DELETE[@]}"; do
     rm -rf "$d" 2>/dev/null
@@ -85,7 +108,7 @@ echo "============================================"
 header "5.1: Create from Template — First-Agent Contract"
 
 echo "  Creating repository from template..."
-if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --public >/dev/null 2>&1 && \
+if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --private >/dev/null 2>&1 && \
    sleep 3 && \
    git clone "https://github.com/$TEST_REPO.git" "$WORK_DIR/$REPO_NAME" >/dev/null 2>&1; then
   pass "Repository created from template: $TEST_REPO"
@@ -332,5 +355,10 @@ else
 fi
 echo "============================================"
 echo ""
+
+if [[ $CLEANUP_FAILED -ne 0 ]]; then
+  echo -e "${RED}Test resources were leaked — see above. Failing the run.${NC}" >&2
+  exit 1
+fi
 
 exit "$FAIL"
