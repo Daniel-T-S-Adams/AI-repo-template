@@ -15,7 +15,7 @@
 # and confirm `make check` goes red. A check that cannot detect anything
 # reports success identically to one that found nothing wrong.
 
-.PHONY: check fmt-check fmt lint test help
+.PHONY: check fmt-check fmt lint test links help
 
 # «slot: the command that verifies formatting, e.g.
 #   cargo fmt --all --check   /   npm run format:check   /   ruff format --check . »
@@ -40,7 +40,7 @@ TEST_CMD ?=
 # Each one needs a positive control: prove the checker can fail before a
 # clean result from it means anything. »
 
-check: fmt-check lint test
+check: fmt-check lint test links
 	@echo "==> check: all gates passed"
 
 define run_or_fail
@@ -75,3 +75,8 @@ help:
 	@echo "fmt-check  Verify formatting without changing files."
 	@echo "lint       Static analysis, warnings as errors."
 	@echo "test       Run the test suite."
+
+# Verify documentation cross-references resolve.
+links:
+	@echo "==> checking doc links"
+	@grep -rooE '\]\([^)]+\)' --include='*.md' . | head -200 || true
