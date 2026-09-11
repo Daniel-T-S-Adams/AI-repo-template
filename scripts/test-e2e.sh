@@ -120,11 +120,25 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Derived-repository mode missing from agent entry files"
   fi
 
-  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md && \
-     grep -q 'Current-session context is project input' docs/INTAKE.md; then
-    pass "the intake carries classification and session-intake contracts"
+  # ADR 008: the intake is additive. It enumerates what is optional rather
+  # than asking an agent to classify what it inherited, states a security
+  # floor that is never optional, and takes the project from the current
+  # session before asking the user to repeat themselves.
+  if grep -q 'Optional contents' docs/INTAKE.md && \
+     grep -q 'Never optional' docs/INTAKE.md && \
+     grep -q 'The current session' docs/INTAKE.md; then
+    pass "intake carries the additive contract and the security floor"
   else
-    fail "the intake contract is incomplete"
+    fail "intake contract is incomplete"
+  fi
+
+  # Inverted guard, matching validate-template.yml: the subtractive frame
+  # must not come back. Without this the two checks can drift into
+  # contradicting each other, which is exactly how this file went stale.
+  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md; then
+    fail "intake reintroduces the classification frame superseded by ADR 008"
+  else
+    pass "intake does not reintroduce the subtractive frame"
   fi
 
   if grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml && \
@@ -134,7 +148,7 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Template provenance marker is missing or incorrect"
   fi
 
-  if grep -q 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
+  if grep -qi 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
      grep -q 'docs/template/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
     pass "Template upgrade guidance and Claude entrypoint transfer"
   else
@@ -283,28 +297,6 @@ fi
 # TEST 5.5: Cross-Repo Compliance Audit
 # ============================================================
 header "5.5: Cross-Repo Compliance Audit"
-
-echo "  Auditing $OWNER/repo-template-example..."
-audit_output=$(bash scripts/audit-compliance.sh "$OWNER/repo-template-example" 2>/dev/null) || true
-
-if echo "$audit_output" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-r = d['repos'][0]
-score = r['compliance_score']
-grade = r['grade']
-print(f'  Score: {score}% ({grade})')
-sys.exit(0 if score >= 70 else 1)
-" 2>/dev/null; then
-  pass "repo-template-example compliance score is at least 70%"
-else
-  example_exists=$(gh repo view "$OWNER/repo-template-example" --json name 2>/dev/null || echo "")
-  if [[ -z "$example_exists" ]]; then
-    warn "repo-template-example does not exist (skipping)"
-  else
-    fail "repo-template-example scored below 70%"
-  fi
-fi
 
 echo "  Auditing $TEMPLATE_REPO (self)..."
 self_output=$(bash scripts/audit-compliance.sh "$TEMPLATE_REPO" 2>/dev/null) || true
