@@ -84,6 +84,7 @@ Material architecture decisions are recorded in [docs/adr/](adr/).
 | [007](template/adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
 | [008](template/adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
 | [009](template/adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
+| [010](template/adr/010-separate-template-ancestry.md) | Separate template ancestry from a project's own records |
 
 ---
 

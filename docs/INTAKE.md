@@ -218,8 +218,9 @@ The intake is done when:
 - the review gate ran on a real PR and its verdicts are bound to the head
   commit;
 - an ADR records the intake decisions, including anything removed under §4;
-- the Repository state section of `CLAUDE.md` is deleted, leaving only the
-  Template Ancestry pointer.
+- the Repository state section of `CLAUDE.md` and `AGENTS.md` is deleted,
+  exactly as those files' Derived-repository mode paragraph specifies. Follow
+  that instruction; do not restate it from memory. Every other section stays.
 
 Record the decisions as an ADR rather than in this file. This file is the
 procedure and stays generic; what *this* project decided is a durable choice

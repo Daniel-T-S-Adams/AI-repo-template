@@ -1,4 +1,4 @@
-# ADR 001 — Separate template ancestry from a project's own records
+# ADR 010 — Separate template ancestry from a project's own records
 
 > The template's decision records move to `docs/template/adr/`, so a derived repository's ADR numbering starts empty at `001`.
 
