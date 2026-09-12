@@ -2,9 +2,10 @@
 
 > Canonical, model-neutral procedure for upgrading a repository descended from `Daniel-T-S-Adams/AI-repo-template` without resetting or overwriting legitimate project evolution.
 
-**Version:** 1.1  
-**Current compatibility baseline:** `slot-intake-v1`  
-**Previous baseline:** `agent-native-phase0-v1` — superseded by [ADR 008](adr/008-slot-based-intake.md)  
+**Version:** 1.2  
+**Current compatibility baseline:** `slot-intake-v2`  
+**Previous baselines:** `slot-intake-v1` — superseded by [ADR 010](adr/010-separate-template-ancestry.md);
+`agent-native-phase0-v1` — superseded by [ADR 008](adr/008-slot-based-intake.md)  
 **Applies to:** Claude Code, Codex, and other capable engineering agents working in a repository with confirmed or suspected `AI-repo-template` ancestry.
 
 ## Purpose

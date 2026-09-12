@@ -34,4 +34,6 @@ The records are kept rather than withheld: they explain why the inherited machin
 
 ### Neutral
 
-- Existing derived repositories that already carry the ADRs in `docs/adr/` are unaffected. Relocating them is a reconciliation choice, not a compatibility break, and does not require a baseline bump: no downstream bootstrap or agent-routing behaviour changes.
+- **The baseline bumps to `slot-intake-v2`.** An earlier draft of this record claimed otherwise, on the reasoning that no downstream bootstrap behaviour changed. That was wrong on its own terms — the intake procedure changes in four places — and wrong in consequence. Leaving the marker at `slot-intake-v1` would make one baseline ID describe two different trees: repositories generated before this change carry template records at `docs/adr/001-009`, and those generated after carry an empty `docs/adr/`. An upgrade agent resolving `slot-intake-v1` to "the inherited tree" could not then decide whether `docs/adr/001-sha-pinned-actions.md` was inherited content to relocate or that project's own first record — the precise ambiguity this record exists to remove, surviving downstream and undetectable, because the router would see a marker matching current and skip reconciliation entirely.
+
+- Existing derived repositories are unaffected until they request an upgrade, at which point the baseline difference is what tells the agent that ancestry records need relocating.

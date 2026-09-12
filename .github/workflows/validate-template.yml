@@ -187,7 +187,7 @@ jobs:
           grep -q 'The Golden Path' README.md || { echo "::error::README missing agent-first golden path"; exit 1; }
 
           test -f .repo-template.yaml || { echo "::error::.repo-template.yaml missing"; exit 1; }
-          grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
+          grep -q '^baseline_id: slot-intake-v2$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
           grep -q 'strategy: semantic-reconciliation' .repo-template.yaml || { echo "::error::semantic reconciliation policy missing"; exit 1; }
           test -f docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade guidance missing"; exit 1; }
           grep -q '## Repository Router' docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing repository router"; exit 1; }
