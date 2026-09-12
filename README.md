@@ -120,7 +120,7 @@ bash scripts/secure-repo.sh --audit
 | [Branch Protection](docs/BRANCH-PROTECTION.md) | Repository hardening and rulesets |
 | [Documentation Guide](docs/DOCUMENTATION-GUIDE.md) | Documentation quality standard |
 | [Architecture](docs/ARCHITECTURE.md) | Architecture of the template project itself |
-| [ADRs](docs/adr/) | Material design decisions |
+| [Template ADRs](docs/template/adr/) | Why the template is shaped as it is |
 
 The full index is in [docs/README.md](docs/README.md).
 

@@ -39,7 +39,7 @@ graph TD
 | GitHub governance | PR/issue policy, CODEOWNERS, dependency and workflow configuration | `.github/` |
 | Security baseline | Secret protection, repository hardening, AI threat model | `templates/hooks/`, `scripts/secure-repo.sh`, `docs/AI-SECURITY.md` |
 | Verification | Template regression, E2E, compliance, and CI checks | `scripts/test-template.sh`, `scripts/test-e2e.sh`, `scripts/audit-compliance.sh`, `.github/workflows/` |
-| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/adr/` |
+| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/template/adr/` |
 
 ## Derived-Repository Flow
 
@@ -71,7 +71,9 @@ sequenceDiagram
 
 ## Decision Records
 
-Material architecture decisions are recorded in [docs/adr/](adr/).
+Material architecture decisions **for the template itself** are recorded in
+[docs/template/adr/](template/adr/). A derived project's own records go in
+`docs/adr/`, which ships holding only the format file (ADR 010).
 
 | ADR | Decision |
 |---|---|
@@ -89,4 +91,4 @@ Material architecture decisions are recorded in [docs/adr/](adr/).
 ---
 
 **Referenced by:** [README.md](../README.md), [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md)  
-**See also:** [Intake](INTAKE.md) | [AI Security](AI-SECURITY.md) | [ADRs](adr/)
+**See also:** [Intake](INTAKE.md) | [AI Security](AI-SECURITY.md) | [Template ADRs](template/adr/)

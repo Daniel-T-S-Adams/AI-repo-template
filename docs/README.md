@@ -28,7 +28,8 @@
 | Document | Purpose |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture of the `AI-repo-template` source project |
-| [adr/](adr/) | Architecture Decision Records, including first-agent and downstream reconciliation decisions |
+| [adr/](adr/) | A derived project's own decision records. Ships holding only the format file |
+| [template/adr/](template/adr/) | The template's own decisions — first-agent behaviour, downstream reconciliation, the review pipeline |
 
 ## Root-Level Project Docs
 
