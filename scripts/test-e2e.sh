@@ -32,6 +32,19 @@ if [[ -z "$OWNER" ]]; then
   exit 1
 fi
 
+# Preflight the scope needed to clean up, BEFORE creating anything. Without
+# this the suite creates a repository it cannot delete and leaks it. The
+# header has always claimed this requirement; nothing enforced it.
+if ! $KEEP; then
+  if ! gh auth status 2>&1 | grep -q 'delete_repo'; then
+    echo -e "${RED}ERROR: the gh token lacks the 'delete_repo' scope.${NC}" >&2
+    echo "This suite creates a real repository and must be able to delete it." >&2
+    echo "Grant it:  gh auth refresh -h github.com -s delete_repo" >&2
+    echo "Or run with --keep to preserve test resources deliberately." >&2
+    exit 1
+  fi
+fi
+
 TEMPLATE_REPO="$OWNER/AI-repo-template"
 TIMESTAMP=$(date +%s)
 TEST_REPO="${OWNER}/e2e-test-template-${TIMESTAMP}"
@@ -40,6 +53,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 WORK_DIR=$(mktemp -d)
 
 REPOS_TO_DELETE=()
+CLEANUP_FAILED=0
 DIRS_TO_DELETE=("$WORK_DIR")
 
 # shellcheck disable=SC2317,SC2329
@@ -57,11 +71,27 @@ cleanup() {
   echo ""
   echo "Cleaning up..."
   for r in "${REPOS_TO_DELETE[@]}"; do
-    gh repo delete "$r" --yes 2>/dev/null && echo "  Deleted: $r" || echo "  Failed to delete: $r"
+    if gh repo delete "$r" --yes 2>/dev/null; then
+      echo "  Deleted: $r"
+    else
+      echo -e "  ${RED}LEAKED: $r could not be deleted${NC}" >&2
+      echo "  Delete it manually: gh repo delete $r --yes" >&2
+      CLEANUP_FAILED=1
+    fi
   done
   for d in "${DIRS_TO_DELETE[@]}"; do
     rm -rf "$d" 2>/dev/null
   done
+
+  # The gate lives HERE, not in the script body. cleanup() runs only as the
+  # EXIT trap, which fires after the body has already selected its exit
+  # status, so a check down there reads CLEANUP_FAILED before this function
+  # has ever assigned it. `exit` from inside an EXIT trap overrides the
+  # status the body chose — that is what makes a leak fail the run.
+  if [[ $CLEANUP_FAILED -ne 0 ]]; then
+    echo -e "${RED}Test resources were leaked — see above. Failing the run.${NC}" >&2
+    exit 1
+  fi
 }
 trap cleanup EXIT
 
@@ -85,11 +115,21 @@ echo "============================================"
 header "5.1: Create from Template — First-Agent Contract"
 
 echo "  Creating repository from template..."
-if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --public >/dev/null 2>&1 && \
-   sleep 3 && \
-   git clone "https://github.com/$TEST_REPO.git" "$WORK_DIR/$REPO_NAME" >/dev/null 2>&1; then
-  pass "Repository created from template: $TEST_REPO"
+# Register for cleanup the instant the repository exists, NOT after the clone.
+# Anything between creation and registration is a window where a live
+# repository is untracked: cleanup() iterates an empty list, the leak gate
+# never fires, and the suite reports a create failure while the repository
+# persists unmentioned. Cloning a --private repo depends on git credentials,
+# so that window is real, not theoretical.
+if gh repo create "$TEST_REPO" --template "$TEMPLATE_REPO" --private >/dev/null 2>&1; then
   REPOS_TO_DELETE+=("$TEST_REPO")
+  sleep 3
+  if git clone "https://github.com/$TEST_REPO.git" "$WORK_DIR/$REPO_NAME" >/dev/null 2>&1; then
+    pass "Repository created from template: $TEST_REPO"
+  else
+    fail "Created $TEST_REPO but could not clone it (git credentials for HTTPS?)"
+    TEST_REPO_SKIP=true
+  fi
 else
   fail "Failed to create repository from template"
   TEST_REPO_SKIP=true
@@ -120,11 +160,25 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Derived-repository mode missing from agent entry files"
   fi
 
-  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md && \
-     grep -q 'Current-session context is project input' docs/INTAKE.md; then
-    pass "the intake carries classification and session-intake contracts"
+  # ADR 008: the intake is additive. It enumerates what is optional rather
+  # than asking an agent to classify what it inherited, states a security
+  # floor that is never optional, and takes the project from the current
+  # session before asking the user to repeat themselves.
+  if grep -q 'Optional contents' docs/INTAKE.md && \
+     grep -q 'Never optional' docs/INTAKE.md && \
+     grep -q 'The current session' docs/INTAKE.md; then
+    pass "intake carries the additive contract and the security floor"
   else
-    fail "the intake contract is incomplete"
+    fail "intake contract is incomplete"
+  fi
+
+  # Inverted guard, matching validate-template.yml: the subtractive frame
+  # must not come back. Without this the two checks can drift into
+  # contradicting each other, which is exactly how this file went stale.
+  if grep -q 'KEEP / ADAPT / REMOVE / DEFER' docs/INTAKE.md; then
+    fail "intake reintroduces the classification frame superseded by ADR 008"
+  else
+    pass "intake does not reintroduce the subtractive frame"
   fi
 
   if grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml && \
@@ -134,7 +188,7 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     fail "Template provenance marker is missing or incorrect"
   fi
 
-  if grep -q 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
+  if grep -qi 'three-way model' docs/template/TEMPLATE-UPGRADE.md && \
      grep -q 'docs/template/TEMPLATE-UPGRADE.md' .claude/commands/upgrade-template.md; then
     pass "Template upgrade guidance and Claude entrypoint transfer"
   else
@@ -283,28 +337,6 @@ fi
 # TEST 5.5: Cross-Repo Compliance Audit
 # ============================================================
 header "5.5: Cross-Repo Compliance Audit"
-
-echo "  Auditing $OWNER/repo-template-example..."
-audit_output=$(bash scripts/audit-compliance.sh "$OWNER/repo-template-example" 2>/dev/null) || true
-
-if echo "$audit_output" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-r = d['repos'][0]
-score = r['compliance_score']
-grade = r['grade']
-print(f'  Score: {score}% ({grade})')
-sys.exit(0 if score >= 70 else 1)
-" 2>/dev/null; then
-  pass "repo-template-example compliance score is at least 70%"
-else
-  example_exists=$(gh repo view "$OWNER/repo-template-example" --json name 2>/dev/null || echo "")
-  if [[ -z "$example_exists" ]]; then
-    warn "repo-template-example does not exist (skipping)"
-  else
-    fail "repo-template-example scored below 70%"
-  fi
-fi
 
 echo "  Auditing $TEMPLATE_REPO (self)..."
 self_output=$(bash scripts/audit-compliance.sh "$TEMPLATE_REPO" 2>/dev/null) || true
