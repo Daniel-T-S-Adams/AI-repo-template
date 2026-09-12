@@ -52,10 +52,13 @@ jobs:
       - name: Define reviewers
         id: set
         env:
-          # «slot: the reviewer set. Start with two — one broad correctness
-          # lens and one deep pass over the domain's invariants. Add a third
-          # only for a distinct, non-overlapping focus, or to deliberately
-          # vary the model over the same remit. Pin explicit model IDs.»
+          # The reviewer set. Two is the default and a valid answer: one
+          # broad correctness lens, one deep pass over the domain's
+          # invariants. Add a third only for a distinct, non-overlapping
+          # focus, or to vary the model over the same remit. Pin explicit
+          # model IDs. Deliberately carries no slot marker: this has a
+          # working default, and a marker above a default is indistinguishable
+          # from an unanswered question.
           REVIEWERS: >-
             [
               {"id":"general","model":"claude-sonnet-5","prompt":".github/review/general.md"},

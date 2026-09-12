@@ -4,7 +4,7 @@
 
 **Version:** 1.1  
 **Current compatibility baseline:** `slot-intake-v1`  
-**Previous baseline:** `agent-native-phase0-v1` — superseded by [ADR 008](../adr/008-slot-based-intake.md)  
+**Previous baseline:** `agent-native-phase0-v1` — superseded by [ADR 008](adr/008-slot-based-intake.md)  
 **Applies to:** Claude Code, Codex, and other capable engineering agents working in a repository with confirmed or suspected `AI-repo-template` ancestry.
 
 ## Purpose
@@ -287,4 +287,4 @@ Older marked baselines and legacy unmarked repositories must remain supported by
 ---
 
 **Referenced by:** `.repo-template.yaml`, `CLAUDE.md`, `AGENTS.md`, `.claude/commands/upgrade-template.md`, `.claude/skills/template-upgrade/SKILL.md`  
-**See also:** [Intake](../INTAKE.md) | [ADR 007](../adr/007-template-upgrade-reconciliation.md) | [AI Security](../AI-SECURITY.md)
+**See also:** [Intake](../INTAKE.md) | [ADR 007](adr/007-template-upgrade-reconciliation.md) | [AI Security](../AI-SECURITY.md)

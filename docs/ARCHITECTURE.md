@@ -75,15 +75,15 @@ Material architecture decisions are recorded in [docs/adr/](adr/).
 
 | ADR | Decision |
 |---|---|
-| [001](adr/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
-| [002](adr/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
-| [003](adr/003-skills-directory-format.md) | Use runtime-supported skill directory format |
-| [004](adr/004-two-agent-focus.md) | Focus on Claude Code + Codex |
-| [005](adr/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
-| [006](adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories — *superseded by 008* |
-| [007](adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
-| [008](adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
-| [009](adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
+| [001](template/adr/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
+| [002](template/adr/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
+| [003](template/adr/003-skills-directory-format.md) | Use runtime-supported skill directory format |
+| [004](template/adr/004-two-agent-focus.md) | Focus on Claude Code + Codex |
+| [005](template/adr/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
+| [006](template/adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories — *superseded by 008* |
+| [007](template/adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
+| [008](template/adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
+| [009](template/adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
 
 ---
 

@@ -42,7 +42,7 @@ Replace `docs/PHASE-0.md` with `docs/INTAKE.md`, an additive procedure.
 
 - The template is more opinionated about how a project is developed. A project that does not want AI review, a single check command, or the four-document taxonomy inherits structure it must undo — the opposite of Phase 0's failure mode, and a real cost.
 - The optional table in `INTAKE.md` is a maintenance surface: adding template content means deciding whether it is machinery or optional, and recording that.
-- Downstream repositories created under Phase 0 refer to a procedure that no longer exists. They are covered by [TEMPLATE-UPGRADE.md](../template/TEMPLATE-UPGRADE.md), which reconciles semantically and never reruns intake for a mature project.
+- Downstream repositories created under Phase 0 refer to a procedure that no longer exists. They are covered by [TEMPLATE-UPGRADE.md](../TEMPLATE-UPGRADE.md), which reconciles semantically and never reruns intake for a mature project.
 
 ### Neutral
 
@@ -50,4 +50,4 @@ Replace `docs/PHASE-0.md` with `docs/INTAKE.md`, an additive procedure.
 
 ---
 
-> See also: [ADR 006](006-agent-native-phase-zero.md) | [Intake](../INTAKE.md) | [Workflow](../workflow.md)
+> See also: [ADR 006](006-agent-native-phase-zero.md) | [Intake](../../INTAKE.md) | [Workflow](../../workflow.md)

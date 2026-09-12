@@ -99,4 +99,4 @@ Deferred. A separate `state.yaml` or lifecycle engine is unnecessary while repos
 
 ---
 
-**See also:** [Phase 0](../PHASE-0.md) | [ADR 004: Two-Agent Focus](004-two-agent-focus.md) | [AI Security](../AI-SECURITY.md)
+**See also:** Phase 0 (`docs/PHASE-0.md`, removed by ADR 008) | [ADR 004: Two-Agent Focus](004-two-agent-focus.md) | [AI Security](../../AI-SECURITY.md)
