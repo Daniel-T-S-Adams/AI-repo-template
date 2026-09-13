@@ -39,7 +39,7 @@ graph TD
 | GitHub governance | PR/issue policy, CODEOWNERS, dependency and workflow configuration | `.github/` |
 | Security baseline | Secret protection, repository hardening, AI threat model | `templates/hooks/`, `scripts/secure-repo.sh`, `docs/AI-SECURITY.md` |
 | Verification | Template regression, E2E, compliance, and CI checks | `scripts/test-template.sh`, `scripts/test-e2e.sh`, `scripts/audit-compliance.sh`, `.github/workflows/` |
-| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/adr/` |
+| Documentation | Source-template operation, security, architecture, and decisions | `README.md`, `docs/`, `docs/template/adr/` |
 
 ## Derived-Repository Flow
 
@@ -71,21 +71,24 @@ sequenceDiagram
 
 ## Decision Records
 
-Material architecture decisions are recorded in [docs/adr/](adr/).
+Material architecture decisions **for the template itself** are recorded in
+[docs/template/adr/](template/adr/). A derived project's own records go in
+`docs/adr/`, which ships holding only the format file (ADR 010).
 
 | ADR | Decision |
 |---|---|
-| [001](adr/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
-| [002](adr/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
-| [003](adr/003-skills-directory-format.md) | Use runtime-supported skill directory format |
-| [004](adr/004-two-agent-focus.md) | Focus on Claude Code + Codex |
-| [005](adr/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
-| [006](adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories — *superseded by 008* |
-| [007](adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
-| [008](adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
-| [009](adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
+| [001](template/adr/001-sha-pinned-actions.md) | SHA-pin GitHub Actions |
+| [002](template/adr/002-rulesets-over-classic-protection.md) | Prefer rulesets over classic branch protection |
+| [003](template/adr/003-skills-directory-format.md) | Use runtime-supported skill directory format |
+| [004](template/adr/004-two-agent-focus.md) | Focus on Claude Code + Codex |
+| [005](template/adr/005-drift-severity-and-fail-closed.md) | Severity-aware, fail-closed drift verification |
+| [006](template/adr/006-agent-native-phase-zero.md) | Agent-native Phase 0 for derived repositories — *superseded by 008* |
+| [007](template/adr/007-template-upgrade-reconciliation.md) | Semantic reconciliation for downstream template upgrades |
+| [008](template/adr/008-slot-based-intake.md) | Slot-based intake supersedes Phase 0 |
+| [009](template/adr/009-no-post-merge-digest.md) | No post-merge digest; nobody reads merges by decision |
+| [010](template/adr/010-separate-template-ancestry.md) | Separate template ancestry from a project's own records |
 
 ---
 
 **Referenced by:** [README.md](../README.md), [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md)  
-**See also:** [Intake](INTAKE.md) | [AI Security](AI-SECURITY.md) | [ADRs](adr/)
+**See also:** [Intake](INTAKE.md) | [AI Security](AI-SECURITY.md) | [Template ADRs](template/adr/)

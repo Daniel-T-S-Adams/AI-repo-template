@@ -50,7 +50,7 @@ bash scripts/labels.sh --dry-run --repo o/r    # label taxonomy
 - Feature branches; never push to `main`.
 - Atomic commits, conventional prefixes.
 - A material change to how the template behaves gets an ADR in
-  [../adr/](../adr/).
+  [adr/](adr/).
 - `CLAUDE.md` and `AGENTS.md` are **byte-identical**. Change one, copy it to the
   other; `validate-template.yml` fails the build if they diverge.
 

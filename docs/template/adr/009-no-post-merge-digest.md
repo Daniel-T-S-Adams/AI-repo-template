@@ -45,4 +45,4 @@ Slot 10 itself stays in the intake. The question is genuine and a derived projec
 
 ---
 
-> See also: [ADR 008](008-slot-based-intake.md) | [Intake](../INTAKE.md) | [Workflow](../workflow.md)
+> See also: [ADR 008](008-slot-based-intake.md) | [Intake](../../INTAKE.md) | [Workflow](../../workflow.md)

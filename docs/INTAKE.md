@@ -68,6 +68,10 @@ been run against the real thing.
 | something that must be true before proceeding | `docs/checklist.md` |
 | work still to be built | a numbered criterion in the first slice's plan |
 
+`docs/spec/` and `docs/plans/` ship empty. `docs/checklist.md` does not exist
+yet — create it from the layout in [workflow.md](workflow.md) § "What must be
+true before we may proceed".
+
 Then add what `initial_plan.md` does not contain: the slice list and build order
 in the checklist, and the schemas, fixtures and a fake for each external service.
 
@@ -95,6 +99,14 @@ again in three months.
 | 8 | What must be green, and how a PR lands | **Branch protection on GitHub — not in the repository.** Record the intended state via `scripts/secure-repo.sh` and its config, so a silently removed required check is detectable |
 | 9 | The unit of work | Issue template, and the criteria ID scheme |
 | 10 | Who reads what landed, and how often | An ADR recording the answer. "Nobody" is valid — this template does not ship a mechanism for it (see ADR 009). Under manual merge, slot 8 usually answers it |
+
+**Slots 5 and 6 depend on a phase-1 decision the table does not list:** where
+the thing runs, and the stack that follows. A check command and a fixture shape
+cannot be chosen without it, and §1 forbids inventing it. If that decision has
+not been made, those slots stay open, CI stays red, and the intake is
+**incomplete on purpose** — record the blocking question in the intake ADR and
+stop. A repository honestly blocked on a human decision is a better outcome
+than one shaped around a guess.
 
 Do not try to decide everything. Capability that depends on evidence you do not
 have yet — extra specialist reviewers, deployment gates — belongs in a plan with
@@ -136,6 +148,7 @@ project-dependent. Decide each, and record removals in the intake ADR.
 | `docs/GITHUB-ENVIRONMENTS.md`, `docs/FORK-SECURITY.md` | You deploy to environments, or accept fork PRs. |
 | `docs/PROD_CHECKLIST.md` | Keep as a generic reference. It is **not** `docs/checklist.md`, which is this project's own gate file. |
 | `.claude/skills/` general utilities | Per skill. They are conveniences, not workflow machinery. |
+| `docs/template/` | Keep. It holds the template's own decisions, maintenance contract and upgrade SOP — **not** this project's. It is deliberately outside `docs/adr/` so it never occupies your ADR numbering; your first record is `001`. |
 
 **Never optional:** the security substrate (secret scanning, CodeQL, dependency
 review, SHA-pinned actions and the Dependabot config that maintains the pins,
@@ -205,8 +218,9 @@ The intake is done when:
 - the review gate ran on a real PR and its verdicts are bound to the head
   commit;
 - an ADR records the intake decisions, including anything removed under §4;
-- the Repository state section of `CLAUDE.md` is deleted, leaving only the
-  Template Ancestry pointer.
+- the Repository state section of `CLAUDE.md` and `AGENTS.md` is deleted,
+  exactly as those files' Derived-repository mode paragraph specifies. Follow
+  that instruction; do not restate it from memory. Every other section stays.
 
 Record the decisions as an ADR rather than in this file. This file is the
 procedure and stays generic; what *this* project decided is a durable choice

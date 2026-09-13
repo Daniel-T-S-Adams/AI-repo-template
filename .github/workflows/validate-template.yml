@@ -173,10 +173,21 @@ jobs:
           # ADR 008: the two agent surfaces are byte-identical, so behavioural
           # drift between Claude Code and Codex is impossible by construction.
           cmp -s CLAUDE.md AGENTS.md || { echo "::error::CLAUDE.md and AGENTS.md have diverged; they must be byte-identical"; exit 1; }
+          # ADR 010: docs/adr/ is the DERIVED project's numbering space and must
+          # ship holding only the format file, so its first record is 001. The
+          # template's own decisions live in docs/template/adr/. This was
+          # documented three times and violated twice anyway — including by the
+          # commit that introduced the rule — because nothing inspected the
+          # directory. Now something does.
+          STRAY=$(find docs/adr -type f ! -name '000-template.md' 2>/dev/null)
+          if [ -n "$STRAY" ]; then
+            echo "::error::docs/adr/ must ship holding only 000-template.md (ADR 010). A derived project's first record is 001, and these files would occupy its numbering: $STRAY. Template decisions belong in docs/template/adr/."
+            exit 1
+          fi
           grep -q 'The Golden Path' README.md || { echo "::error::README missing agent-first golden path"; exit 1; }
 
           test -f .repo-template.yaml || { echo "::error::.repo-template.yaml missing"; exit 1; }
-          grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
+          grep -q '^baseline_id: slot-intake-v2$' .repo-template.yaml || { echo "::error::unexpected template baseline_id"; exit 1; }
           grep -q 'strategy: semantic-reconciliation' .repo-template.yaml || { echo "::error::semantic reconciliation policy missing"; exit 1; }
           test -f docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade guidance missing"; exit 1; }
           grep -q '## Repository Router' docs/template/TEMPLATE-UPGRADE.md || { echo "::error::template upgrade SOP missing repository router"; exit 1; }

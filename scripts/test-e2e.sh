@@ -181,7 +181,7 @@ if [[ "${TEST_REPO_SKIP:-}" != "true" ]]; then
     pass "intake does not reintroduce the subtractive frame"
   fi
 
-  if grep -q '^baseline_id: slot-intake-v1$' .repo-template.yaml && \
+  if grep -q '^baseline_id: slot-intake-v2$' .repo-template.yaml && \
      grep -q 'strategy: semantic-reconciliation' .repo-template.yaml; then
     pass "Template provenance marker carries the current reconciliation baseline"
   else

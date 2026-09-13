@@ -24,8 +24,9 @@ Do not run the intake against it; see
 [docs/template/MAINTAINING.md](docs/template/MAINTAINING.md).
 
 **Derived-repository mode.** Any other repository is an instance. Run the
-intake once, then delete this section down to the Template Ancestry pointer at
-the end of the file.
+intake once, then delete **this "Repository state" section only** — everything
+from its heading to the "Project phase" heading. Leave every other section
+standing, including Template Ancestry at the end of the file.
 
 **Existing derived project.** If the slots are filled and real project work
 exists, the intake is done. Never rerun it because the upstream template
